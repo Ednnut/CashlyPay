@@ -18,6 +18,15 @@ For a customer you choose, the application lists all previous invoices for the c
 
 For more information about Invoices API, see [Manage Invoices Using the Invoices API](https://developer.squareup.com/docs/invoices-api/overview).
 
+## Modernization roadmap
+
+To transform CashlyPay into a production-ready, modern invoicing workspace consider the following phased upgrades:
+
+- **Security & platform** – add authentication/OAuth, per-role permissions, CSRF protection, strict validation, and expand logging/monitoring with structured outputs and alerting.
+- **Billing depth** – support estimates, deposits/partial payments, subscriptions, installment plans, taxes/discounts, attachments, and reminder cadences powered by background jobs plus Square webhooks.
+- **Data & integrations** – persist services/customers/templates in a relational database, expose search/filter APIs, stream updates to analytics dashboards, and add exports plus connectors (Slack, email, accounting suites).
+- **Experience** – ship interactive dashboards, table bulk actions, customizable invoice templates, accessibility improvements, theming controls, and guided onboarding to keep teams productive.
+
 Before you begin, note the following:
 
 - Application framework. This sample uses [Express](https://expressjs.com/) (a web framework for Node.js). We chose Node.js primarily because it is easy to set up and test. Otherwise, you can use any other Square-provided SDKs.
@@ -32,10 +41,20 @@ Before you begin, note the following:
 
 1.  Set your credentials.
 
-    Create a `.env` file in the root of this directory. Populate the file with the following
-    line `SQUARE_ACCESS_TOKEN=your-access-token`. Replace the placeholder for `SQUARE_ACCESS_TOKEN` with your
-    own production or sandbox credentials. For more help, see our [guide on how to get
-    your credentials](https://developer.squareup.com/docs/orders-api/quick-start/step-1).
+    Create a `.env` file in the root of this directory. Populate the file with the following lines:
+
+    ```
+    SQUARE_ACCESS_TOKEN=your-access-token
+    ADMIN_API_TOKEN=your-long-random-token
+    ```
+
+    - Replace the placeholder for `SQUARE_ACCESS_TOKEN` with your
+      own production or sandbox credentials. For more help, see our [guide on how to get
+      your credentials](https://developer.squareup.com/docs/orders-api/quick-start/step-1).
+    - `ADMIN_API_TOKEN` gates the sensitive management and invoice routes. Every client request
+      to `/management/*` and `/invoice/*` must include either an `Authorization: Bearer <token>` header
+      or an `x-api-key` header whose value matches this token. When the variable is omitted in development,
+      the middleware allows all requests but logs a warning. Always define it in staging/production.
 
     **WARNING**: Remember to use your own credentials only for testing the sample app.
     If you plan to make a version of this sample app available for your own purposes,
@@ -85,8 +104,34 @@ This Express.js project is organized as follows:
   - **index.js.** Provides routes to handle all the requests for the initial page, which shows a list of customers.
   - invoice.js. Provides routes to handle all the requests related to the invoice management (create, publish, cancel, delete).
   - management.js. Provides routes to render a list of contractor services that customer can purchase and also list all the invoices for the selected customer.
+- **/config/services.js.** Defines the service catalog displayed on the management page. You can override it by creating `config/services.json`
+  or pointing `SERVICES_CONFIG_PATH` to another JSON file. Each item supports `id`, `name`, `priceAmount` (in cents), `description`, and `category`.
+- **ENV.**
+  - `SERVICES_CONFIG_PATH` (optional) – path to a JSON file with an array of service objects to show in the UI.
 - **/util.** The utility code initializes the Square SDK client.
 - **/views.** Provides the view (.pug) files.
+
+## Filtering services and invoices
+
+The `/management/:locationId/:customerId` page supports rich filtering through query parameters (and the UI uses the same parameters under the hood):
+
+- `q` and `category` limit the service catalog list. Categories map to the `category` field from `config/services.js`.
+- `invoiceSearch` and `invoiceStatus` refine the invoice list. Status is case-insensitive and accepts values such as `all`, `draft`, `scheduled`, `unpaid`, `paid`, `overdue`, or `canceled`.
+
+When you build links or integrate this page elsewhere, you can compose these query parameters directly to pre-filter the experience for a specific workflow.
+
+## Estimates and advanced invoices
+
+- Use **Estimates → New Estimate** on the management page to capture deposits, discounts, surcharges, and taxes in multiple currencies before creating an invoice.
+- Draft estimates are stored locally in `data/estimates.json` via `util/estimate-store.js`. Each entry keeps computed totals (including deposit/balance amounts).
+- Converting an estimate invokes `POST /invoice/convert-estimate`, which automatically creates a Square order with discounts/taxes/service charges and schedules deposit/balance payment requests on the resulting invoice.
+- Converted estimates reference the final invoice for fast auditing.
+
+### Recurring subscriptions
+
+- **Subscriptions → New Subscription** lets you define weekly or monthly recurring invoices, including start date, number of occurrences, usage add-ons, and preferred payment method (card, bank, manual).
+- Subscriptions are persisted in `data/subscriptions.json` via `util/subscription-store.js` and are rendered on the management page for each customer.
+- Creating a subscription automatically produces a scheduled Square invoice with the configured recurrence and accepted payment methods, so future invoices follow the cadence without manual work.
 
 ## Application flow
 

@@ -16,11 +16,126 @@ limitations under the License.
 
 const express = require('express');
 const crypto = require('crypto');
+const Joi = require('joi');
 const { cardsApi, ordersApi, invoicesApi, locationsApi } = require('../util/square-client');
+const estimateStore = require('../util/estimate-store');
 
 const router = express.Router();
 
 const MERCHANT_SUBSCRIPTION_NOT_FOUND_CODE = 'MERCHANT_SUBSCRIPTION_NOT_FOUND';
+
+const createInvoiceSchema = Joi.object({
+  customerId: Joi.string().trim().required(),
+  locationId: Joi.string().trim().required(),
+  idempotencyKey: Joi.string().trim().min(10).max(64).required(),
+  priceAmount: Joi.number().integer().positive().required(),
+  name: Joi.string().trim().max(255).required(),
+});
+
+const publishInvoiceSchema = Joi.object({
+  customerId: Joi.string().trim().required(),
+  locationId: Joi.string().trim().required(),
+  idempotencyKey: Joi.string().trim().min(10).max(64).required(),
+  invoiceId: Joi.string().trim().required(),
+  invoiceVersion: Joi.number().integer().min(0).required(),
+});
+
+const mutateInvoiceSchema = Joi.object({
+  customerId: Joi.string().trim().required(),
+  locationId: Joi.string().trim().required(),
+  invoiceId: Joi.string().trim().required(),
+  invoiceVersion: Joi.number().integer().min(0).required(),
+});
+
+const convertEstimateSchema = Joi.object({
+  estimateId: Joi.string().required(),
+  customerId: Joi.string().required(),
+  locationId: Joi.string().required(),
+  idempotencyKey: Joi.string().trim().min(10).max(64).required(),
+});
+
+const validateRequest = (schema, payload) => {
+  const { error, value } = schema.validate(payload, {
+    abortEarly: false,
+    stripUnknown: true,
+  });
+
+  if (error) {
+    const validationError = new Error('Invalid request payload');
+    validationError.status = 400;
+    validationError.errors = error.details.map((detail) => detail.message);
+    throw validationError;
+  }
+
+  return value;
+};
+
+const buildPaymentRequestsFromEstimate = (estimate, currency) => {
+  const paymentRequests = [];
+  const now = new Date();
+  const depositDue = new Date(now);
+  depositDue.setDate(now.getDate() + 3);
+  const balanceDue = new Date(now);
+  balanceDue.setDate(now.getDate() + 10);
+
+  if (estimate.depositPercentage > 0 && estimate.depositAmount > 0) {
+    paymentRequests.push({
+      requestType: 'DEPOSIT',
+      dueDate: depositDue.toISOString().split('T')[0],
+      amountMoney: {
+        amount: estimate.depositAmount,
+        currency,
+      },
+    });
+  }
+
+  paymentRequests.push({
+    requestType: 'BALANCE',
+    dueDate: balanceDue.toISOString().split('T')[0],
+    reminders: [
+      {
+        message: 'Payment due soon',
+        relativeScheduledDays: -2,
+      },
+    ],
+  });
+
+  return paymentRequests;
+};
+
+const addPricingDetailsToOrder = (order, estimate) => {
+  if (estimate.discountPercent) {
+    order.discounts = [
+      {
+        name: 'Estimate Discount',
+        percentage: estimate.discountPercent.toFixed(2),
+        scope: 'ORDER',
+      },
+    ];
+  }
+
+  if (estimate.taxPercent) {
+    order.taxes = [
+      {
+        name: 'Tax',
+        percentage: estimate.taxPercent.toFixed(2),
+        scope: 'ORDER',
+      },
+    ];
+  }
+
+  if (estimate.surchargeAmount) {
+    order.serviceCharges = [
+      {
+        name: 'Surcharge',
+        amountMoney: {
+          amount: estimate.surchargeAmount,
+          currency: estimate.currency,
+        },
+      },
+    ];
+  }
+};
 
 /**
  * Matches: GET /invoice/view/:locationId/:customerId/:invoiceId
@@ -89,7 +204,14 @@ router.get('/view/:locationId/:customerId/:invoiceId', async (req, res, next) =>
  *  name: The name of the order item
  */
 router.post('/create', async (req, res, next) => {
-  const { customerId, locationId, idempotencyKey, priceAmount, name } = req.body;
+  let payload;
+  try {
+    payload = validateRequest(createInvoiceSchema, req.body);
+  } catch (validationError) {
+    return next(validationError);
+  }
+
+  const { customerId, locationId, idempotencyKey, priceAmount, name } = payload;
 
   try {
     // Step 1: Fetch cards for the customer
@@ -111,8 +233,8 @@ router.post('/create', async (req, res, next) => {
             name,
             quantity: '1',
             basePriceMoney: {
-              amount: parseInt(priceAmount),
-              currency: currency,
+              amount: priceAmount,
+              currency,
             },
           },
         ],
@@ -228,6 +350,93 @@ router.post('/create', async (req, res, next) => {
   }
 });
 
+router.post('/convert-estimate', async (req, res, next) => {
+  let payload;
+  try {
+    payload = validateRequest(convertEstimateSchema, req.body);
+  } catch (validationError) {
+    return next(validationError);
+  }
+
+  try {
+    const estimate = estimateStore.getEstimate(payload.estimateId);
+    if (!estimate) {
+      const err = new Error('Estimate not found');
+      err.status = 404;
+      throw err;
+    }
+
+    if (estimate.status === 'converted' && estimate.invoiceId) {
+      return res.redirect(`view/${payload.locationId}/${payload.customerId}/${estimate.invoiceId}`);
+    }
+
+    const orderRequest = {
+      order: {
+        locationId: payload.locationId,
+        customerId: payload.customerId,
+        lineItems: [
+          {
+            name: estimate.serviceName,
+            quantity: '1',
+            basePriceMoney: {
+              amount: estimate.amount,
+              currency: estimate.currency,
+            },
+          },
+        ],
+      },
+      idempotencyKey: payload.idempotencyKey,
+    };
+
+    addPricingDetailsToOrder(orderRequest.order, estimate);
+
+    const {
+      result: { order },
+    } = await ordersApi.createOrder(orderRequest);
+
+    const paymentRequests = buildPaymentRequestsFromEstimate(estimate, estimate.currency);
+
+    const requestBody = {
+      idempotencyKey: payload.idempotencyKey,
+      invoice: {
+        deliveryMethod: 'EMAIL',
+        orderId: order.id,
+        title: `${estimate.serviceName} Estimate`,
+        description: estimate.notes || 'Generated from estimate',
+        primaryRecipient: {
+          customerId: payload.customerId,
+        },
+        paymentRequests,
+        acceptedPaymentMethods: {
+          bankAccount: true,
+          squareGiftCard: true,
+          card: true,
+        },
+        customFields: [
+          {
+            label: 'Estimate ID',
+            value: estimate.id,
+          },
+        ],
+      },
+    };
+
+    const {
+      result: { invoice },
+    } = await invoicesApi.createInvoice(requestBody);
+
+    estimateStore.updateEstimate(estimate.id, {
+      status: 'converted',
+      invoiceId: invoice.id,
+      convertedAt: new Date().toISOString(),
+    });
+
+    res.redirect(`view/${payload.locationId}/${payload.customerId}/${invoice.id}`);
+  } catch (error) {
+    next(error);
+  }
+});
+
 /**
  * Matches: POST /invoice/publish
  *
@@ -242,7 +451,15 @@ router.post('/create', async (req, res, next) => {
  *  invoiceVersion: The version of the invoice
  */
 router.post('/publish', async (req, res, next) => {
-  const { idempotencyKey, locationId, customerId, invoiceId, invoiceVersion } = req.body;
+  let payload;
+  try {
+    payload = validateRequest(publishInvoiceSchema, req.body);
+  } catch (validationError) {
+    return next(validationError);
+  }
+
+  const { idempotencyKey, locationId, customerId, invoiceId, invoiceVersion } = payload;
+
   try {
     // publish invoice
     const { result } = await invoicesApi.publishInvoice(invoiceId, {
@@ -270,7 +487,15 @@ router.post('/publish', async (req, res, next) => {
  *  invoiceVersion: The version of the invoice
  */
 router.post('/cancel', async (req, res, next) => {
-  const { locationId, customerId, invoiceId, invoiceVersion } = req.body;
+  let payload;
+  try {
+    payload = validateRequest(mutateInvoiceSchema, req.body);
+  } catch (validationError) {
+    return next(validationError);
+  }
+
+  const { locationId, customerId, invoiceId, invoiceVersion } = payload;
+
   try {
     // cancel invoice
     await invoicesApi.cancelInvoice(invoiceId, {
@@ -297,7 +522,15 @@ router.post('/cancel', async (req, res, next) => {
  *  invoiceVersion: The version of the invoice
  */
 router.post('/delete', async (req, res, next) => {
-  const { locationId, customerId, invoiceId, invoiceVersion } = req.body;
+  let payload;
+  try {
+    payload = validateRequest(mutateInvoiceSchema, req.body);
+  } catch (validationError) {
+    return next(validationError);
+  }
+
+  const { locationId, customerId, invoiceId, invoiceVersion } = payload;
+
   try {
     // delete the invoice
     await invoicesApi.deleteInvoice(invoiceId, parseInt(invoiceVersion));

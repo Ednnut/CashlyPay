@@ -1,0 +1,96 @@
+extends layout
+
+block styles
+  link(rel="stylesheet" href="/stylesheets/pages/management.css")
+
+block content
+  .dashboard
+    header.section
+      .section-header
+        a.button.button-icon(href=`/management/${locationId}/${customer.id}`)
+          svg(width="20" height="20" viewBox="0 0 20 20" fill="none")
+            path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+          span Back to Customer
+        h1.page-title Create Recurring Plan
+
+    section.section
+      form.subscription-form(action="/subscription/create" method="post")
+        input(type="hidden" name="customerId" value=customer.id)
+        input(type="hidden" name="locationId" value=locationId)
+
+        .form-grid
+          label.form-field
+            span.form-label Service
+            select(name="serviceId" required)
+              each item in serviceItems
+                option(value=item.id data-amount=item.priceAmount)= item.name
+          label.form-field
+            span.form-label Amount (cents)
+            input(type="number" name="amount" min="100" step="100" value=serviceItems[0] ? serviceItems[0].priceAmount : 10000 required)
+          label.form-field
+            span.form-label Currency
+            input(type="text" name="currency" value=defaultCurrency maxlength="3" required)
+        .form-grid
+          label.form-field
+            span.form-label Frequency
+            select(name="frequency" required)
+              option(value="MONTHLY") Monthly
+              option(value="WEEKLY") Weekly
+          label.form-field
+            span.form-label Start Date
+            input(type="date" name="startDate" required value=new Date().toISOString().split('T')[0])
+          label.form-field
+            span.form-label Occurrences
+            input(type="number" name="occurrences" min="1" max="24" value="6" required)
+
+        fieldset.form-field
+          legend.form-label Payment Method Preference
+          label.checkbox-inline
+            input(type="radio" name="paymentMethod" value="CARD_ON_FILE" checked)
+            span Charge card on file
+          label.checkbox-inline
+            input(type="radio" name="paymentMethod" value="BANK_ON_FILE")
+            span Charge bank account
+          label.checkbox-inline
+            input(type="radio" name="paymentMethod" value="MANUAL")
+            span Manual payment
+
+        .form-grid
+          label.form-field
+            span.form-label Allow card payments?
+            select(name="allowCard")
+              option(value="true" selected) Yes
+              option(value="false") No
+          label.form-field
+            span.form-label Allow bank transfers?
+            select(name="allowBank")
+              option(value="false" selected) No
+              option(value="true") Yes
+          label.form-field
+            span.form-label Allow Square gift cards?
+            select(name="allowGiftCard")
+              option(value="true" selected) Yes
+              option(value="false") No
+
+        label.form-field
+          span.form-label Usage notes / add-ons
+          textarea(name="usageNotes" rows="3" placeholder="Usage-based add-ons, installment notes, etc.")
+
+        .button-group.mt-lg
+          button.button.button-secondary(type="button" onclick="window.history.back()") Cancel
+          button.button.button-primary(type="submit") Create Plan
+
+block scripts
+  script.
+    document.addEventListener('DOMContentLoaded', function () {
+      const serviceSelect = document.querySelector('select[name="serviceId"]');
+      const amountInput = document.querySelector('input[name="amount"]');
+      if (!serviceSelect || !amountInput) return;
+      serviceSelect.addEventListener('change', function () {
+        const selected = serviceSelect.options[serviceSelect.selectedIndex];
+        const rawAmount = selected.getAttribute('data-amount');
+        if (rawAmount) {
+          amountInput.value = rawAmount;
+        }
+      });
+    });

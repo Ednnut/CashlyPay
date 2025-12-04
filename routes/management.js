@@ -17,6 +17,9 @@ limitations under the License.
 const express = require('express');
 const crypto = require('crypto');
 const { customersApi, invoicesApi } = require('../util/square-client');
+const serviceCatalog = require('../config/services');
+const estimateStore = require('../util/estimate-store');
+const subscriptionStore = require('../util/subscription-store');
 
 const router = express.Router();
 
@@ -40,25 +43,30 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
       result: { customer },
     } = await customersApi.retrieveCustomer(customerId);
 
-    // Initialize a list of services that can create invoice for.
-    // We hard code these items for simplicity of the example, you can use
-    // Catalog API to retrieve the catalog items from your Square account.
-    // For more information, please check:
-    // https://developer.squareup.com/docs/catalog-api/what-it-does
-    const serviceItems = [
-      {
-        name: 'Roof Inspection',
-        priceAmount: 7500,
-      },
-      {
-        name: 'Roof Cleanning (2000~2500 sqft)',
-        priceAmount: 37500,
-      },
-      {
-        name: 'Gutter Cleaning',
-        priceAmount: 12000,
-      },
-    ];
+    const { q, category, invoiceStatus, invoiceSearch } = req.query;
+    let serviceItems = serviceCatalog.services;
+
+    const normalizedCategory = category && category.toLowerCase() !== 'all' ? category : null;
+    const normalizedInvoiceStatus =
+      invoiceStatus && invoiceStatus.toLowerCase() !== 'all'
+        ? invoiceStatus.toUpperCase()
+        : 'ALL';
+    const normalizedInvoiceSearch = invoiceSearch ? invoiceSearch.trim() : '';
+
+    if (normalizedCategory) {
+      serviceItems = serviceCatalog.findByCategory(category);
+    }
+
+    if (q) {
+      const keywordFiltered = serviceCatalog.search(q);
+      // When both filters exist, intersect the sets
+      if (normalizedCategory) {
+        const ids = new Set(serviceItems.map((item) => item.id));
+        serviceItems = keywordFiltered.filter((item) => ids.has(item.id));
+      } else {
+        serviceItems = keywordFiltered;
+      }
+    }
 
     // Get all the invoices for this customer.
     // The API support pagination, for simplicity, we retrieve all invoices.
@@ -87,14 +95,67 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
       }).format(date);
     };
 
+    const rawInvoices = invoices || [];
+    const estimates = estimateStore.listByCustomer(customerId);
+    const subscriptions = subscriptionStore.listByCustomer(customerId);
+    let filteredInvoices = rawInvoices;
+    if (normalizedInvoiceStatus !== 'ALL') {
+      filteredInvoices = filteredInvoices.filter((invoice) => invoice.status === normalizedInvoiceStatus);
+    }
+
+    if (normalizedInvoiceSearch) {
+      const term = normalizedInvoiceSearch.toLowerCase();
+      filteredInvoices = filteredInvoices.filter((invoice) => {
+        const title = invoice.title || '';
+        const number = invoice.invoiceNumber || '';
+        const customerName = `${invoice.primaryRecipient?.givenName || ''} ${
+          invoice.primaryRecipient?.familyName || ''
+        }`;
+        return (
+          title.toLowerCase().includes(term) ||
+          number.toLowerCase().includes(term) ||
+          customerName.toLowerCase().includes(term.trim())
+        );
+      });
+    }
+
     // Render the invoice management page
     res.render('management', {
       locationId,
       serviceItems,
       customer,
-      invoices: invoices || [],
+      invoices: filteredInvoices,
+      estimates,
+      subscriptions,
       idempotencyKey: crypto.randomUUID(),
       formatDate, // Pass the helper function to the template
+      serviceFilters: {
+        q: q || '',
+        category: normalizedCategory || 'all',
+        totalConfigured: serviceCatalog.services.length,
+        categories: [
+          'all',
+          ...new Set(serviceCatalog.services.map((service) => service.category).filter(Boolean)),
+        ],
+      },
+      invoiceFilters: {
+        status: normalizedInvoiceStatus,
+        search: normalizedInvoiceSearch,
+        total: rawInvoices.length,
+        statusOptions: [
+          'ALL',
+          'DRAFT',
+          'SCHEDULED',
+          'UNPAID',
+          'PARTIALLY_PAID',
+          'PAID',
+          'OVERDUE',
+          'CANCELED',
+        ],
+      },
+      recurringFilters: {
+        total: subscriptions.length,
+      },
     });
   } catch (error) {
     next(error);

@@ -57,9 +57,6 @@ block content
             
             .invoice-actions.flex.gap-sm
               if invoice.status !== "DRAFT" && invoice.status !== "SCHEDULED"
-            
-            .invoice-actions.flex.gap-sm
-              if invoice.status !== "DRAFT" && invoice.status !== "SCHEDULED"
                 a.button.button-secondary(href=invoice.publicUrl target="_blank" rel="noopener")
                   svg.icon(viewBox="0 0 24 24")
                     path(d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
@@ -146,16 +143,21 @@ block content
                       tr
                         td.text-left
                           .flex.flex-col
+                            span.font-medium #{item.name || 'Line item'}
+                            if item.note || item.description
+                              span.text-sm.text-secondary #{item.note || item.description}
+                        td.text-right #{item.quantity || '1'}
+                        td.text-right
+                          - const basePriceMoney = item.basePriceMoney ? parseInt(item.basePriceMoney.amount, 10) : 0;
+                          span $#{(basePriceMoney / 100).toFixed(2)}
+                        td.text-right.font-medium
+                          - const totalMoney = item.grossSalesMoney || item.totalMoney || item.basePriceMoney;
+                          - const totalAmount = totalMoney ? parseInt(totalMoney.amount, 10) : basePriceMoney;
+                          span $#{(totalAmount / 100).toFixed(2)}
                   else
                     tr
                       td(colspan="4").text-center.py-lg
-                        .text-secondary No items in this invoice
-                          span.font-medium #{item.name}
-                          if item.description
-                            span.text-sm.text-secondary #{item.description}
-                      td.text-right #{item.quantity}
-                      td.text-right $#{(parseInt(item.basePriceMoney.amount) / 100).toFixed(2)}
-                      td.text-right.font-medium $#{(parseInt(item.grossSalesMoney.amount) / 100).toFixed(2)}
+                        span.text-secondary No items in this invoice
                 tfoot
                   if invoice.paymentRequests[0].computedAmountMoney
                     tr.text-lg
@@ -203,81 +205,3 @@ block content
                     span Cancel Invoice
                 a.button.button-secondary(href=invoice.publicUrl target="_blank" rel="noopener")
                   span View Public Invoice
-        //- Invoice Details Grid
-        .dashboard-stats.animate-slide-up
-          //- Recipient Info
-          .stat-card
-            span.stat-label Recipient
-            .stat-value #{invoice.primaryRecipient.givenName} #{invoice.primaryRecipient.familyName}
-            p.text-secondary #{invoice.primaryRecipient.emailAddress}
-          
-          //- Payment Method
-          .stat-card
-            span.stat-label Payment Method
-            .stat-value
-              case invoice.paymentRequests[0].automaticPaymentSource
-                when "NONE"
-                  | Manual Payment
-                when "CARD_ON_FILE"
-                  | Card on File
-                when "BANK_ON_FILE"
-                  | Bank Account
-        
-          //- Due Date
-          .stat-card
-            span.stat-label Due Date
-            .stat-value #{invoice.paymentRequests[0].dueDate}
-          
-          //- Amount
-          .stat-card.highlight
-            span.stat-label Amount
-            .stat-value.large $#{(parseInt(invoice.paymentRequests[0].computedAmountMoney.amount) / 100).toFixed(2)}
-
-          //- Scheduled Date (if applicable)
-          if invoice.scheduledAt
-            .stat-card
-              span.stat-label Scheduled For
-              .stat-value #{invoice.scheduledAt}
-          
-          //- Created Date
-          .stat-card
-            span.stat-label Created
-            .stat-value #{invoice.createdAt}
-          
-          //- Public URL (if applicable)
-          if invoice.status !== "DRAFT" && invoice.status !== "SCHEDULED"
-            .stat-card
-              span.stat-label Public URL
-              .stat-value
-                a.link.text-brand(href=invoice.publicUrl target="_blank" rel="noopener") View Invoice
-
-    //- Action Buttons
-    .fixed-bottom-bar
-      .container
-        .button-group
-          if invoice.status === "DRAFT"
-            //- Delete Invoice Form
-            form.mb-0(id="delete" action='/invoice/delete' method='post')
-              input(name='locationId' type='hidden' value=locationId)
-              input(name="invoiceId" type='hidden' value=invoice.id)
-              input(name="invoiceVersion" type='hidden' value=invoice.version)
-              input(name="customerId" type='hidden' value=customerId)
-              button.button.button-danger(type="submit") Delete Invoice
-
-            //- Publish Invoice Form  
-            form.mb-0(id="publish" action='/invoice/publish' method='post')
-              input(name='idempotencyKey' type='hidden' value=idempotencyKey)
-              input(name='locationId' type='hidden' value=locationId)
-              input(name="invoiceId" type='hidden' value=invoice.id)
-              input(name="invoiceVersion" type='hidden' value=invoice.version)
-              input(name="customerId" type='hidden' value=customerId)
-              button.button.button-primary(type="submit") Publish Invoice
-
-          //- Cancel Invoice Form (for non-draft/paid/etc invoices)
-          if invoice.status !== "DRAFT" && invoice.status !== "PAID" && invoice.status !== "REFUNDED" && invoice.status !== "CANCELED" && invoice.status !== "FAILED"
-            form.mb-0(id="cancel" action='/invoice/cancel' method='post')
-              input(name='locationId' type='hidden' value=locationId)
-              input(name="invoiceId" type='hidden' value=invoice.id)
-              input(name="invoiceVersion" type='hidden' value=invoice.version)
-              input(name="customerId" type='hidden' value=customerId)
-              button.button.button-danger(type="submit") Cancel Invoice

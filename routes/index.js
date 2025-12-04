@@ -17,7 +17,10 @@ limitations under the License.
 const express = require('express');
 const managementRoute = require('./management');
 const invoiceRoute = require('./invoice');
+const estimateRoute = require('./estimate');
+const subscriptionRoute = require('./subscription');
 const { customersApi, locationsApi } = require('../util/square-client');
+const requireAuth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -28,8 +31,10 @@ const router = express.Router();
  *  If the rquest url matches one of the router.use calls, then the routes used are in the
  *  required file.
  */
-router.use('/management', managementRoute);
-router.use('/invoice', invoiceRoute);
+router.use('/management', requireAuth, managementRoute);
+router.use('/invoice', requireAuth, invoiceRoute);
+router.use('/estimate', requireAuth, estimateRoute);
+router.use('/subscription', requireAuth, subscriptionRoute);
 
 /**
  * Matches: GET /

@@ -51,15 +51,101 @@ block content
                 path(d="M1.5 3.5v9a1 1 0 001 1h11a1 1 0 001-1v-9a1 1 0 00-1-1h-11a1 1 0 00-1 1zm1 .5l5.5 4 5.5-4m-11 8v-7l5.5 4 5.5-4v7h-11z" stroke="currentColor")
               span #{customer.emailAddress}
     
+    //- Estimate actions
+    section.section
+      .section-header
+        h3.section-title Estimates
+        a.button.button-primary(href=`/estimate/new/${locationId}/${customer.id}`)
+          svg.icon(viewBox="0 0 20 20")
+            path(d="M10 5v10m5-5H5" stroke="currentColor" stroke-width="2" stroke-linecap="round")
+          span New Estimate
+      if estimates && estimates.length
+        .estimate-list
+          each estimate in estimates
+            .estimate-card
+              .estimate-card__header
+                h4 #{estimate.serviceName}
+                span.badge(class=estimate.status === 'converted' ? 'badge-success' : 'badge-warning') #{estimate.status}
+              .estimate-card__body
+                p.text-secondary Total: $#{(estimate.totalAmount / 100).toFixed(2)} #{estimate.currency}
+                if estimate.depositPercentage
+                  p.text-sm Deposit #{estimate.depositPercentage}% ($#{(estimate.depositAmount/100).toFixed(2)})
+                if estimate.discountPercent
+                  p.text-sm Discount #{estimate.discountPercent}%
+                if estimate.taxPercent
+                  p.text-sm Tax #{estimate.taxPercent}%
+                if estimate.notes
+                  p.text-sm #{estimate.notes}
+              .estimate-card__actions
+                if estimate.status !== 'converted'
+                  form(action='/invoice/convert-estimate' method='post')
+                    input(type='hidden' name='estimateId' value=estimate.id)
+                    input(type='hidden' name='locationId' value=locationId)
+                    input(type='hidden' name='customerId' value=customer.id)
+                    input(type='hidden' name='idempotencyKey' value=idempotencyKey + `_estimate_${estimate.id}`)
+                    button.button.button-primary(type='submit') Convert to Invoice
+                else if estimate.invoiceId
+                  a.button.button-secondary(href=`/invoice/view/${locationId}/${customer.id}/${estimate.invoiceId}`) View Invoice
+      else
+        .empty-state
+          svg.empty-state__icon(viewBox="0 0 24 24" width="48" height="48")
+            path(d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-width="2" stroke-linecap="round")
+          h3.empty-state__title No Estimates
+          p.empty-state__message Build a scoped estimate before sending an invoice.
+
+    //- Subscriptions Section
+    section.section
+      .section-header
+        h3.section-title Subscriptions
+        a.button.button-primary(href=`/subscription/new/${locationId}/${customer.id}`)
+          svg.icon(viewBox="0 0 20 20")
+            path(d="M10 5v10m5-5H5" stroke="currentColor" stroke-width="2" stroke-linecap="round")
+          span New Subscription
+      if subscriptions && subscriptions.length
+        p.text-secondary.text-sm.mb-sm Active plans: #{subscriptions.length}
+        .subscription-grid
+          each sub in subscriptions
+            .subscription-card
+              .subscription-card__header
+                h4 #{sub.serviceName} (#{sub.frequency.toLowerCase()})
+                span.badge.badge-info #{sub.status}
+              .subscription-card__body
+                p.text-secondary Amount: $#{(sub.amount/100).toFixed(2)} #{sub.currency}
+                p.text-sm Starts #{sub.startDate}
+                p.text-sm Payment method: #{sub.paymentMethod.replace('_', ' ')}
+                if sub.usageNotes
+                  p.text-sm #{sub.usageNotes}
+              .subscription-card__actions
+                if sub.invoiceId
+                  a.button.button-secondary(href=`/invoice/view/${locationId}/${customer.id}/${sub.invoiceId}`) View invoice
+      else
+        .empty-state
+          svg.empty-state__icon(viewBox="0 0 24 24" width="48" height="48")
+            path(d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-width="2" stroke-linecap="round")
+          h3.empty-state__title No Subscriptions
+          p.empty-state__message Set up a recurring plan with flexible payment methods.
+
     //- Services Section
     section.section
       .section-header
         h3.section-title Available Services
-        .section-actions
-          button.button.button-primary(type="button")
+        form.service-filters(method="get" action=`/management/${locationId}/${customer.id}`)
+          input(type="hidden" name="invoiceSearch" value=invoiceFilters.search)
+          input(type="hidden" name="invoiceStatus" value=invoiceFilters.status.toLowerCase())
+          label.sr-only(for="service-search") Search services
+          input#service-search.search-input(type="text" name="q" placeholder="Search services..." value=serviceFilters.q)
+          
+          select.select-filter(name="category" onchange="this.form.submit()")
+            each cat in serviceFilters.categories
+              option(value=cat selected=serviceFilters.category === cat)= cat.charAt(0).toUpperCase() + cat.slice(1)
+          
+          button.button.button-secondary.button-sm(type="submit")
             svg.icon(viewBox="0 0 20 20")
-              path(d="M10 5v10m5-5H5" stroke="currentColor" stroke-width="2" stroke-linecap="round")
-            span Add Service
+              path(d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" fill="currentColor")
+            span Search
+
+      if serviceItems && serviceItems.length
+        p.text-secondary.text-sm.mb-sm Showing #{serviceItems.length} of #{serviceFilters.totalConfigured} services
 
       if serviceItems && serviceItems.length
         .service-grid
@@ -94,19 +180,26 @@ block content
 
     //- Invoices Section
     section.section
+      - const serviceFilterQuery = `q=${encodeURIComponent(serviceFilters.q)}&category=${encodeURIComponent(serviceFilters.category)}`
       .section-header
         h3.section-title Recent Invoices
-        .section-actions
-          .search-box
-            svg.icon.search-icon(viewBox="0 0 20 20")
-              path(d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" fill="currentColor")
-            input.search-input(type="text" placeholder="Search invoices by number or title...")
+        form.invoice-filters(method="get" action=`/management/${locationId}/${customer.id}`)
+          input(type="hidden" name="q" value=serviceFilters.q)
+          input(type="hidden" name="category" value=serviceFilters.category)
+          label.sr-only(for="invoice-search") Search invoices
+          input#invoice-search.search-input(type="text" name="invoiceSearch" placeholder="Search invoices by number, title, or recipient..." value=invoiceFilters.search)
           
-          select.select-filter
-            option(value="all") All Invoices
-            option(value="draft") Draft
-            option(value="pending") Pending
-            option(value="paid") Paid
+          select.select-filter(name="invoiceStatus" onchange="this.form.submit()")
+            each status in invoiceFilters.statusOptions
+              option(value=status.toLowerCase() selected=invoiceFilters.status === status)= status.replace('_', ' ').toUpperCase()
+          
+          button.button.button-secondary.button-sm(type="submit")
+            svg.icon(viewBox="0 0 20 20")
+              path(d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" fill="currentColor")
+            span Filter
+      
+      if invoices && invoices.length
+        p.text-secondary.text-sm.mb-sm Showing #{invoices.length} of #{invoiceFilters.total} invoices
       
       if invoices && invoices.length
         .invoice-list
@@ -143,6 +236,13 @@ block content
                 button.button.button-icon
                   svg.icon(viewBox="0 0 20 20")
                     path(d="M7 3l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+      else if invoiceFilters.total
+        .empty-state
+          svg.empty-state__icon(viewBox="0 0 24 24" width="48" height="48")
+            path(d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round")
+          h3.empty-state__title No Matching Invoices
+          p.empty-state__message Try adjusting the status filter or clearing your search.
+          a.button.button-secondary(href=`/management/${locationId}/${customer.id}?${serviceFilterQuery}`) Clear filters
       else
         .empty-state
           svg.empty-state__icon(viewBox="0 0 24 24" width="48" height="48")

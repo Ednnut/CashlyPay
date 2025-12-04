@@ -1,0 +1,77 @@
+extends layout
+
+block styles
+  link(rel="stylesheet" href="/stylesheets/pages/management.css")
+
+block content
+  .dashboard
+    header.section
+      .section-header
+        a.button.button-icon(href=`/management/${locationId}/${customer.id}`)
+          svg(width="20" height="20" viewBox="0 0 20 20" fill="none")
+            path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+          span Back to Customer
+        h1.page-title Create Estimate
+
+    section.section
+      .customer-card.mb-xl
+        h2.customer-name #{customer.givenName} #{customer.familyName}
+        if customer.emailAddress
+          p.customer-meta
+            svg.icon(width="16" height="16" viewBox="0 0 16 16")
+              path(d="M1.5 3.5v9a1 1 0 001 1h11a1 1 0 001-1v-9a1 1 0 00-1-1h-11a1 1 0 00-1 1zm1 .5l5.5 4 5.5-4m-11 8v-7l5.5 4 5.5-4v7h-11z" stroke="currentColor")
+            span #{customer.emailAddress}
+
+form.estimate-form(action="/estimate/create" method="post")
+        input(type="hidden" name="customerId" value=customer.id)
+        input(type="hidden" name="locationId" value=locationId)
+
+        .form-grid
+          label.form-field
+            span.form-label Service
+            select(name="serviceId" required)
+              each item in serviceItems
+                option(value=item.id data-amount=item.priceAmount)= item.name
+          label.form-field
+            span.form-label Base Amount
+            input(type="number" name="amount" min="100" step="100" value=serviceItems[0] ? serviceItems[0].priceAmount : 10000 required)
+          label.form-field
+            span.form-label Currency
+            input(type="text" name="currency" value=defaultCurrency maxlength="3" required)
+        
+        .form-grid
+          label.form-field
+            span.form-label Discount (%)
+            input(type="number" name="discountPercent" min="0" max="100" step="1" value="0")
+          label.form-field
+            span.form-label Tax (%)
+            input(type="number" name="taxPercent" min="0" max="100" step="0.1" value="0")
+          label.form-field
+            span.form-label Surcharge (in cents)
+            input(type="number" name="surchargeAmount" min="0" step="100" value="0")
+          label.form-field
+            span.form-label Deposit (%)
+            input(type="number" name="depositPercentage" min="0" max="100" step="1" value="0")
+        
+        label.form-field
+          span.form-label Notes
+          textarea(name="notes" rows="3" placeholder="Internal notes or scope details...")
+        
+        .button-group.mt-lg
+          button.button.button-secondary(type="button" onclick="window.history.back()") Cancel
+          button.button.button-primary(type="submit") Save Estimate
+
+block scripts
+  script.
+    document.addEventListener('DOMContentLoaded', function () {
+      const serviceSelect = document.querySelector('select[name="serviceId"]');
+      const amountInput = document.querySelector('input[name="amount"]');
+      if (!serviceSelect || !amountInput) return;
+      serviceSelect.addEventListener('change', function () {
+        const selected = serviceSelect.options[serviceSelect.selectedIndex];
+        const rawAmount = selected.getAttribute('data-amount');
+        if (rawAmount) {
+          amountInput.value = rawAmount;
+        }
+      });
+    });

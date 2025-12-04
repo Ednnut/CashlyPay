@@ -1,3 +1,4 @@
+
 @import url(https://square-fonts-production-f.squarecdn.com/square-sans.min.css);
 @import url(https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap);
 @import url(https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap);
@@ -525,7 +526,7 @@ a:hover {
 .button,
 .action-button {
   -webkit-user-select: none;
-  user-select: none;
+          user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   will-change: transform;
@@ -728,7 +729,7 @@ a:hover {
   background-color: var(--cash-white);
   cursor: pointer;
   -webkit-appearance: none;
-  appearance: none;
+          appearance: none;
   padding-right: var(--space-xl);
   background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%232D2D2D' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -1319,7 +1320,7 @@ a:hover {
   gap: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.05);
   -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+          backdrop-filter: blur(10px);
 }
 /* Main Content Area */
 .main-content {
@@ -1819,7 +1820,7 @@ tfoot tr {
   right: 0;
   background: var(--theme-surface-overlay);
   -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+          backdrop-filter: blur(8px);
   border-top: 1px solid var(--theme-border);
   padding: var(--space-md) 0;
   z-index: 100;
@@ -2452,7 +2453,7 @@ tfoot tr {
   padding: var(--space-md);
   background: var(--theme-surface-overlay);
   -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+          backdrop-filter: blur(8px);
   border-radius: var(--radius-lg);
   border: 1px solid var(--theme-border);
   display: flex;
