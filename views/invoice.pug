@@ -163,6 +163,23 @@ block content
                     tr.text-lg
                       td.text-left(colspan="3") Total Amount Due
                       td.text-right.font-bold $#{(parseInt(invoice.paymentRequests[0].computedAmountMoney.amount) / 100).toFixed(2)}
+
+        //- Activity Feed
+        .section.mb-xl
+          h3.section-title Activity Feed
+          if activities && activities.length
+            ul.activity-feed
+              each event in activities
+                li.activity-feed__item
+                  .activity-feed__meta
+                    span.activity-feed__type #{event.type}
+                    span.activity-feed__time #{formatDate(event.timestamp)}
+                  if event.payload
+                    pre.activity-feed__payload= JSON.stringify(event.payload, null, 2)
+                  else
+                    p No additional details
+          else
+            p.text-secondary No activity yet for this invoice.
         
         //- Action Buttons
         .fixed-bottom-bar

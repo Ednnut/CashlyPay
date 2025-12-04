@@ -19,6 +19,8 @@ const crypto = require('crypto');
 const Joi = require('joi');
 const { cardsApi, ordersApi, invoicesApi, locationsApi } = require('../util/square-client');
 const estimateStore = require('../util/estimate-store');
+const reminderQueue = require('../util/reminder-queue');
+const activityStore = require('../util/activity-store');
 
 const router = express.Router();
 
@@ -30,6 +32,13 @@ const createInvoiceSchema = Joi.object({
   idempotencyKey: Joi.string().trim().min(10).max(64).required(),
   priceAmount: Joi.number().integer().positive().required(),
   name: Joi.string().trim().max(255).required(),
+  currency: Joi.string().trim().uppercase().length(3).optional(),
+  allowCard: Joi.boolean().truthy('true', '1', 'on').falsy('false', '0', 'off').default(true),
+  allowBank: Joi.boolean().truthy('true', '1', 'on').falsy('false', '0', 'off').default(false),
+  allowGiftCard: Joi.boolean().truthy('true', '1', 'on').falsy('false', '0', 'off').default(true),
+  paymentSource: Joi.string()
+    .valid('AUTO', 'CARD_ON_FILE', 'BANK_ON_FILE', 'NONE')
+    .default('AUTO'),
 });
 
 const publishInvoiceSchema = Joi.object({
@@ -78,20 +87,28 @@ const buildPaymentRequestsFromEstimate = (estimate, currency) => {
   const balanceDue = new Date(now);
   balanceDue.setDate(now.getDate() + 10);
 
+  const automaticSource =
+    estimate.paymentSource && estimate.paymentSource !== 'AUTO' ? estimate.paymentSource : 'NONE';
+
   if (estimate.depositPercentage > 0 && estimate.depositAmount > 0) {
-    paymentRequests.push({
+    const depositRequest = {
       requestType: 'DEPOSIT',
       dueDate: depositDue.toISOString().split('T')[0],
       amountMoney: {
         amount: estimate.depositAmount,
         currency,
       },
-    });
+    };
+    if (automaticSource !== 'NONE') {
+      depositRequest.automaticPaymentSource = automaticSource;
+    }
+    paymentRequests.push(depositRequest);
   }
 
   paymentRequests.push({
     requestType: 'BALANCE',
     dueDate: balanceDue.toISOString().split('T')[0],
+    automaticPaymentSource: automaticSource,
     reminders: [
       {
         message: 'Payment due soon',
@@ -137,6 +154,38 @@ const addPricingDetailsToOrder = (order, estimate) => {
   }
 };
 
+const buildCustomFieldsFromEstimate = (estimate) => {
+  const customFields = [
+    {
+      label: 'Estimate ID',
+      value: estimate.id,
+    },
+  ];
+
+  if (estimate.poNumber) {
+    customFields.push({
+      label: 'PO Number',
+      value: estimate.poNumber,
+    });
+  }
+
+  if (estimate.customNotes) {
+    customFields.push({
+      label: 'Customer Notes',
+      value: estimate.customNotes,
+    });
+  }
+
+  if (estimate.attachments && estimate.attachments.length) {
+    customFields.push({
+      label: 'Attachments',
+      value: estimate.attachments.map((attachment) => `${attachment.name}: ${attachment.url}`).join(' | '),
+    });
+  }
+
+  return customFields;
+};
+
 /**
  * Matches: GET /invoice/view/:locationId/:customerId/:invoiceId
  *
@@ -171,12 +220,15 @@ router.get('/view/:locationId/:customerId/:invoiceId', async (req, res, next) =>
     };
 
     // Render the invoice detail view page
+    const activities = activityStore.listByInvoice(invoiceId);
+
     res.render('invoice', {
       locationId,
       customerId,
       invoice,
       formatDate,
       idempotencyKey: crypto.randomUUID(),
+      activities,
     });
   } catch (error) {
     next(error);
@@ -206,12 +258,28 @@ router.get('/view/:locationId/:customerId/:invoiceId', async (req, res, next) =>
 router.post('/create', async (req, res, next) => {
   let payload;
   try {
-    payload = validateRequest(createInvoiceSchema, req.body);
+    const booleanFields = ['allowCard', 'allowBank', 'allowGiftCard'];
+    const normalizedBody = { ...req.body };
+    booleanFields.forEach((field) => {
+      normalizedBody[field] = Object.prototype.hasOwnProperty.call(req.body, field) ? 'true' : 'false';
+    });
+    payload = validateRequest(createInvoiceSchema, normalizedBody);
   } catch (validationError) {
     return next(validationError);
   }
 
-  const { customerId, locationId, idempotencyKey, priceAmount, name } = payload;
+  const {
+    customerId,
+    locationId,
+    idempotencyKey,
+    priceAmount,
+    name,
+    currency: requestedCurrency,
+    allowCard,
+    allowBank,
+    allowGiftCard,
+    paymentSource,
+  } = payload;
 
   try {
     // Step 1: Fetch cards for the customer
@@ -221,7 +289,7 @@ router.post('/create', async (req, res, next) => {
 
     // Step 2: Fetch location currency
     const locationResponse = await locationsApi.retrieveLocation(locationId);
-    const currency = locationResponse.result.location.currency;
+    const currency = requestedCurrency || locationResponse.result.location.currency;
 
     // Step 3: Create an order to be attached to the invoice
     const orderRequest = {
@@ -266,7 +334,32 @@ router.post('/create', async (req, res, next) => {
 
     // Step 6: Set the payment request based on the customer's card on file status
     let paymentRequest = null;
-    if (cards && cards.length > 0) {
+    if (paymentSource === 'CARD_ON_FILE') {
+      paymentRequest = {
+        requestType: 'BALANCE',
+        automaticPaymentSource: 'CARD_ON_FILE',
+        dueDate: dueDateString,
+        cardId: cards?.[0]?.id,
+      };
+    } else if (paymentSource === 'BANK_ON_FILE') {
+      paymentRequest = {
+        requestType: 'BALANCE',
+        automaticPaymentSource: 'BANK_ON_FILE',
+        dueDate: dueDateString,
+      };
+    } else if (paymentSource === 'NONE') {
+      paymentRequest = {
+        requestType: 'BALANCE',
+        automaticPaymentSource: 'NONE',
+        dueDate: dueDateString,
+        reminders: [
+          {
+            message: 'Your invoice is due tomorrow',
+            relativeScheduledDays: -1,
+          },
+        ],
+      };
+    } else if (cards && cards.length > 0) {
       // the current customer has a card on file
       // creating invoice with the payment request method CARD_ON_FILE
       // the invoice will be charged with the card on file on the due date
@@ -307,9 +400,9 @@ router.post('/create', async (req, res, next) => {
         },
         paymentRequests: [paymentRequest],
         acceptedPaymentMethods: {
-          bankAccount: false,
-          squareGiftCard: true,
-          card: false,
+          bankAccount: allowBank,
+          squareGiftCard: allowGiftCard,
+          card: allowCard,
         },
         // Ensure line items are transferred from order
         lineItems: order.lineItems,
@@ -344,6 +437,7 @@ router.post('/create', async (req, res, next) => {
         throw error;
       }
     }
+    reminderQueue.scheduleFromInvoice(invoice);
     res.redirect(`view/${locationId}/${customerId}/${invoice.id}`);
   } catch (error) {
     next(error);
@@ -408,16 +502,11 @@ router.post('/convert-estimate', async (req, res, next) => {
         },
         paymentRequests,
         acceptedPaymentMethods: {
-          bankAccount: true,
-          squareGiftCard: true,
-          card: true,
+          bankAccount: estimate.allowBank,
+          squareGiftCard: estimate.allowGiftCard,
+          card: estimate.allowCard,
         },
-        customFields: [
-          {
-            label: 'Estimate ID',
-            value: estimate.id,
-          },
-        ],
+        customFields: buildCustomFieldsFromEstimate(estimate),
       },
     };
 
@@ -431,6 +520,7 @@ router.post('/convert-estimate', async (req, res, next) => {
       convertedAt: new Date().toISOString(),
     });
 
+    reminderQueue.scheduleFromInvoice(invoice);
     res.redirect(`view/${payload.locationId}/${payload.customerId}/${invoice.id}`);
   } catch (error) {
     next(error);

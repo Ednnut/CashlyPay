@@ -19,6 +19,8 @@ const managementRoute = require('./management');
 const invoiceRoute = require('./invoice');
 const estimateRoute = require('./estimate');
 const subscriptionRoute = require('./subscription');
+const customerRoute = require('./customer');
+const uploadRoute = require('./uploads');
 const { customersApi, locationsApi } = require('../util/square-client');
 const requireAuth = require('../middleware/auth');
 
@@ -35,6 +37,8 @@ router.use('/management', requireAuth, managementRoute);
 router.use('/invoice', requireAuth, invoiceRoute);
 router.use('/estimate', requireAuth, estimateRoute);
 router.use('/subscription', requireAuth, subscriptionRoute);
+router.use('/customers', requireAuth, customerRoute);
+router.use('/uploads', requireAuth, uploadRoute);
 
 /**
  * Matches: GET /

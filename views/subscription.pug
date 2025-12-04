@@ -23,7 +23,14 @@ block content
             span.form-label Service
             select(name="serviceId" required)
               each item in serviceItems
-                option(value=item.id data-amount=item.priceAmount)= item.name
+                option(
+                  value=item.id
+                  data-amount=item.priceAmount
+                  data-currency=item.currency || defaultCurrency
+                  data-card=item.paymentMethods && item.paymentMethods.card === false ? 'false' : 'true'
+                  data-bank=item.paymentMethods && item.paymentMethods.bankAccount ? 'true' : 'false'
+                  data-gift=item.paymentMethods && item.paymentMethods.squareGiftCard ? 'true' : 'false'
+                )= item.name
           label.form-field
             span.form-label Amount (cents)
             input(type="number" name="amount" min="100" step="100" value=serviceItems[0] ? serviceItems[0].priceAmount : 10000 required)
@@ -55,22 +62,17 @@ block content
             input(type="radio" name="paymentMethod" value="MANUAL")
             span Manual payment
 
-        .form-grid
-          label.form-field
-            span.form-label Allow card payments?
-            select(name="allowCard")
-              option(value="true" selected) Yes
-              option(value="false") No
-          label.form-field
-            span.form-label Allow bank transfers?
-            select(name="allowBank")
-              option(value="false" selected) No
-              option(value="true") Yes
-          label.form-field
-            span.form-label Allow Square gift cards?
-            select(name="allowGiftCard")
-              option(value="true" selected) Yes
-              option(value="false") No
+        fieldset.form-field
+          legend.form-label Accepted payment methods
+          label.checkbox-inline
+            input(type="checkbox" name="allowCard" checked)
+            span Cards & digital wallets
+          label.checkbox-inline
+            input(type="checkbox" name="allowBank")
+            span Bank transfers
+          label.checkbox-inline
+            input(type="checkbox" name="allowGiftCard" checked)
+            span Square gift cards
 
         label.form-field
           span.form-label Usage notes / add-ons
@@ -85,12 +87,34 @@ block scripts
     document.addEventListener('DOMContentLoaded', function () {
       const serviceSelect = document.querySelector('select[name="serviceId"]');
       const amountInput = document.querySelector('input[name="amount"]');
+      const currencyInput = document.querySelector('input[name="currency"]');
+      const cardCheckbox = document.querySelector('input[name="allowCard"]');
+      const bankCheckbox = document.querySelector('input[name="allowBank"]');
+      const giftCheckbox = document.querySelector('input[name="allowGiftCard"]');
       if (!serviceSelect || !amountInput) return;
-      serviceSelect.addEventListener('change', function () {
+      const applyDefaults = () => {
         const selected = serviceSelect.options[serviceSelect.selectedIndex];
+        if (!selected) return;
         const rawAmount = selected.getAttribute('data-amount');
         if (rawAmount) {
           amountInput.value = rawAmount;
         }
+        const currency = selected.getAttribute('data-currency');
+        if (currency && currencyInput) {
+          currencyInput.value = currency;
+        }
+        if (cardCheckbox) {
+          cardCheckbox.checked = selected.getAttribute('data-card') !== 'false';
+        }
+        if (bankCheckbox) {
+          bankCheckbox.checked = selected.getAttribute('data-bank') === 'true';
+        }
+        if (giftCheckbox) {
+          giftCheckbox.checked = selected.getAttribute('data-gift') === 'true';
+        }
+      };
+      serviceSelect.addEventListener('change', function () {
+        applyDefaults();
       });
+      applyDefaults();
     });

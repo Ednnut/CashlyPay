@@ -16,10 +16,9 @@ limitations under the License.
 
 const express = require('express');
 const Joi = require('joi');
-const { customersApi } = require('../util/square-client');
+const { customersApi, locationsApi, invoicesApi, ordersApi } = require('../util/square-client');
 const serviceCatalog = require('../config/services');
 const subscriptionStore = require('../util/subscription-store');
-const { invoicesApi, ordersApi } = require('../util/square-client');
 
 const router = express.Router();
 
@@ -74,15 +73,23 @@ const buildSchedule = (frequency, startDate) => {
 router.get('/new/:locationId/:customerId', async (req, res, next) => {
   const { locationId, customerId } = req.params;
   try {
-    const {
-      result: { customer },
-    } = await customersApi.retrieveCustomer(customerId);
+    const [
+      {
+        result: { customer },
+      },
+      {
+        result: { location },
+      },
+    ] = await Promise.all([
+      customersApi.retrieveCustomer(customerId),
+      locationsApi.retrieveLocation(locationId),
+    ]);
 
     res.render('subscription', {
       locationId,
       customer,
       serviceItems: serviceCatalog.services,
-      defaultCurrency: 'USD',
+      defaultCurrency: location.currency || 'USD',
     });
   } catch (error) {
     next(error);
@@ -92,7 +99,12 @@ router.get('/new/:locationId/:customerId', async (req, res, next) => {
 router.post('/create', async (req, res, next) => {
   let payload;
   try {
-    payload = await recurringSchema.validateAsync(req.body, {
+    const booleanFields = ['allowCard', 'allowBank', 'allowGiftCard'];
+    const normalizedBody = { ...req.body };
+    booleanFields.forEach((field) => {
+      normalizedBody[field] = Object.prototype.hasOwnProperty.call(req.body, field) ? 'true' : 'false';
+    });
+    payload = await recurringSchema.validateAsync(normalizedBody, {
       abortEarly: false,
       stripUnknown: true,
     });
@@ -186,6 +198,9 @@ router.post('/create', async (req, res, next) => {
       paymentMethod: payload.paymentMethod,
       usageNotes: payload.usageNotes,
       invoiceId: invoice.id,
+      allowCard: payload.allowCard,
+      allowBank: payload.allowBank,
+      allowGiftCard: payload.allowGiftCard,
     });
 
     res.redirect(`view/${payload.locationId}/${payload.customerId}/${invoice.id}`);

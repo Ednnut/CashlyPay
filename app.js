@@ -24,6 +24,7 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 
 const routes = require('./routes/index');
+const webhookRoutes = require('./routes/webhooks');
 const app = express();
 
 // Node creates cashed instance of square-client, on initial load
@@ -73,6 +74,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/', routes);
+app.use('/webhooks', webhookRoutes);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

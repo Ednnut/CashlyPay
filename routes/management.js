@@ -16,7 +16,7 @@ limitations under the License.
 
 const express = require('express');
 const crypto = require('crypto');
-const { customersApi, invoicesApi } = require('../util/square-client');
+const { customersApi, invoicesApi, locationsApi } = require('../util/square-client');
 const serviceCatalog = require('../config/services');
 const estimateStore = require('../util/estimate-store');
 const subscriptionStore = require('../util/subscription-store');
@@ -39,9 +39,17 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
   // Post request body contains id of item that is going to be purchased
   const { customerId, locationId } = req.params;
   try {
-    const {
-      result: { customer },
-    } = await customersApi.retrieveCustomer(customerId);
+    const [
+      {
+        result: { customer },
+      },
+      {
+        result: { location },
+      },
+    ] = await Promise.all([
+      customersApi.retrieveCustomer(customerId),
+      locationsApi.retrieveLocation(locationId),
+    ]);
 
     const { q, category, invoiceStatus, invoiceSearch } = req.query;
     let serviceItems = serviceCatalog.services;
@@ -156,6 +164,7 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
       recurringFilters: {
         total: subscriptions.length,
       },
+      defaultCurrency: location.currency || 'USD',
     });
   } catch (error) {
     next(error);

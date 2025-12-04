@@ -76,6 +76,15 @@ block content
                   p.text-sm Tax #{estimate.taxPercent}%
                 if estimate.notes
                   p.text-sm #{estimate.notes}
+                if estimate.poNumber
+                  p.text-sm PO #: #{estimate.poNumber}
+                if estimate.customNotes
+                  p.text-sm Customer notes: #{estimate.customNotes}
+                if estimate.attachments && estimate.attachments.length
+                  ul.text-sm
+                    each attachment in estimate.attachments
+                      li
+                        a(href=attachment.url target="_blank" rel="noopener") #{attachment.name}
               .estimate-card__actions
                 if estimate.status !== 'converted'
                   form(action='/invoice/convert-estimate' method='post')
@@ -113,6 +122,13 @@ block content
                 p.text-secondary Amount: $#{(sub.amount/100).toFixed(2)} #{sub.currency}
                 p.text-sm Starts #{sub.startDate}
                 p.text-sm Payment method: #{sub.paymentMethod.replace('_', ' ')}
+                p.text-sm Accepted:
+                  if sub.allowCard
+                    span.badge.badge-success Card
+                  if sub.allowBank
+                    span.badge.badge-info Bank
+                  if sub.allowGiftCard
+                    span.badge.badge-neutral Gift
                 if sub.usageNotes
                   p.text-sm #{sub.usageNotes}
               .subscription-card__actions
@@ -153,7 +169,7 @@ block content
             .service-card
               .service-card__content
                 h4.service-card__title #{item.name}
-                p.service-card__price $#{(item.priceAmount/100).toFixed(2)}
+                p.service-card__price $#{(item.priceAmount/100).toFixed(2)} #{(item.currency || defaultCurrency)}
                 if item.description
                   p.service-card__description #{item.description}
               
@@ -163,6 +179,24 @@ block content
                 input(type='hidden' name='customerId' value=customer.id)
                 input(type='hidden' name='name' value=item.name)
                 input(type='hidden' name='priceAmount' value=item.priceAmount)
+                input(type='hidden' name='currency' value=item.currency || defaultCurrency)
+                .service-card__options
+                  label.option-pill
+                    input(type='checkbox' name='allowCard' value='true' checked=!(item.paymentMethods && item.paymentMethods.card === false))
+                    span Card/Digital Wallet
+                  label.option-pill
+                    input(type='checkbox' name='allowBank' value='true' checked=item.paymentMethods && item.paymentMethods.bankAccount)
+                    span Bank Transfer
+                  label.option-pill
+                    input(type='checkbox' name='allowGiftCard' value='true' checked=item.paymentMethods && item.paymentMethods.squareGiftCard)
+                    span Gift Card
+                label.service-card__select
+                  span.payment-label Payment Source
+                  select(name='paymentSource')
+                    option(value='AUTO') Auto detect
+                    option(value='CARD_ON_FILE') Charge card on file
+                    option(value='BANK_ON_FILE') Charge bank
+                    option(value='NONE') Manual payment
                 button.button.button-primary(type="submit")
                   svg.icon(viewBox="0 0 20 20")
                     path(d="M4 10h12m-6-6v12" stroke="currentColor" stroke-width="2" stroke-linecap="round")

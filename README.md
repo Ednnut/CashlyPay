@@ -104,8 +104,10 @@ This Express.js project is organized as follows:
   - **index.js.** Provides routes to handle all the requests for the initial page, which shows a list of customers.
   - invoice.js. Provides routes to handle all the requests related to the invoice management (create, publish, cancel, delete).
   - management.js. Provides routes to render a list of contractor services that customer can purchase and also list all the invoices for the selected customer.
+  - customer.js. Provides routes for creating new customers directly from the UI instead of seeding them via the CLI.
 - **/config/services.js.** Defines the service catalog displayed on the management page. You can override it by creating `config/services.json`
-  or pointing `SERVICES_CONFIG_PATH` to another JSON file. Each item supports `id`, `name`, `priceAmount` (in cents), `description`, and `category`.
+  or pointing `SERVICES_CONFIG_PATH` to another JSON file. Each item supports `id`, `name`, `priceAmount` (in cents), optional `currency`, `description`,
+  `category`, and `paymentMethods` booleans (`card`, `bankAccount`, `squareGiftCard`) that seed the per-invoice payment toggles.
 - **ENV.**
   - `SERVICES_CONFIG_PATH` (optional) – path to a JSON file with an array of service objects to show in the UI.
 - **/util.** The utility code initializes the Square SDK client.
@@ -124,14 +126,21 @@ When you build links or integrate this page elsewhere, you can compose these que
 
 - Use **Estimates → New Estimate** on the management page to capture deposits, discounts, surcharges, and taxes in multiple currencies before creating an invoice.
 - Draft estimates are stored locally in `data/estimates.json` via `util/estimate-store.js`. Each entry keeps computed totals (including deposit/balance amounts).
-- Converting an estimate invokes `POST /invoice/convert-estimate`, which automatically creates a Square order with discounts/taxes/service charges and schedules deposit/balance payment requests on the resulting invoice.
-- Converted estimates reference the final invoice for fast auditing.
+- Each estimate allows the operator to pick currency plus accepted payment methods (card/digital wallet, bank transfer, gift card) and a preferred payment source (auto/card-on-file/bank/manual).
+- Converting an estimate invokes `POST /invoice/convert-estimate`, which automatically creates a Square order with discounts/taxes/service charges and schedules deposit/balance payment requests on the resulting invoice while honoring the saved payment preferences.
+- Converted estimates reference the final invoice for fast auditing. Estimates can include purchase-order numbers, customer-facing notes, and attachment uploads (handled via `/uploads` and stored under `public/uploads/`), which are carried forward as custom fields on the resulting invoice.
 
 ### Recurring subscriptions
 
-- **Subscriptions → New Subscription** lets you define weekly or monthly recurring invoices, including start date, number of occurrences, usage add-ons, and preferred payment method (card, bank, manual).
+- **Subscriptions → New Subscription** lets you define weekly or monthly recurring invoices, including start date, number of occurrences, usage add-ons, and preferred payment method (card, bank, manual). Each plan also captures which payment rails are available to the recipient (card/digital wallet, bank transfer, gift card) plus per-service currency defaults.
 - Subscriptions are persisted in `data/subscriptions.json` via `util/subscription-store.js` and are rendered on the management page for each customer.
 - Creating a subscription automatically produces a scheduled Square invoice with the configured recurrence and accepted payment methods, so future invoices follow the cadence without manual work.
+
+### Webhooks, reminders, and audit trail
+
+- Square webhook callbacks should be pointed to `POST /webhooks/square`. Events are persisted via `util/activity-store.js`; reminders for upcoming/overdue invoices are scheduled through `util/reminder-queue.js`. Set `SQUARE_WEBHOOK_SIGNATURE_KEY` in `.env` to enable signature verification.
+- Reminder jobs are processed in-process on an interval and logged as activity entries so finance teams can review what was sent and when.
+- Activity data can be reused to build timelines or analytics dashboards for each invoice.
 
 ## Application flow
 

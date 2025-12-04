@@ -31,7 +31,14 @@ form.estimate-form(action="/estimate/create" method="post")
             span.form-label Service
             select(name="serviceId" required)
               each item in serviceItems
-                option(value=item.id data-amount=item.priceAmount)= item.name
+                option(
+                  value=item.id
+                  data-amount=item.priceAmount
+                  data-currency=item.currency || defaultCurrency
+                  data-card=item.paymentMethods && item.paymentMethods.card === false ? 'false' : 'true'
+                  data-bank=item.paymentMethods && item.paymentMethods.bankAccount ? 'true' : 'false'
+                  data-gift=item.paymentMethods && item.paymentMethods.squareGiftCard ? 'true' : 'false'
+                )= item.name
           label.form-field
             span.form-label Base Amount
             input(type="number" name="amount" min="100" step="100" value=serviceItems[0] ? serviceItems[0].priceAmount : 10000 required)
@@ -56,6 +63,40 @@ form.estimate-form(action="/estimate/create" method="post")
         label.form-field
           span.form-label Notes
           textarea(name="notes" rows="3" placeholder="Internal notes or scope details...")
+
+        fieldset.form-field
+          legend.form-label Accepted payment methods
+          label.checkbox-inline
+            input(type="checkbox" name="allowCard" checked)
+            span Cards & digital wallets
+          label.checkbox-inline
+            input(type="checkbox" name="allowBank")
+            span Bank transfer
+          label.checkbox-inline
+            input(type="checkbox" name="allowGiftCard" checked)
+            span Square gift card
+
+        label.form-field
+          span.form-label Preferred payment source
+          select(name="paymentSource")
+            option(value="AUTO" selected) Auto detect
+            option(value="CARD_ON_FILE") Charge card on file
+            option(value="BANK_ON_FILE") Charge bank on file
+            option(value="NONE") Manual payment
+
+        .form-grid
+          label.form-field
+            span.form-label Purchase Order #
+            input(type="text" name="poNumber" placeholder="PO-12345")
+          label.form-field
+            span.form-label Custom Notes (visible to customer)
+            textarea(name="customNotes" rows="3")
+        
+        label.form-field
+          span.form-label Attachments
+          input(type="file" id="attachmentUploader" multiple)
+          input(type="hidden" name="attachments" id="attachmentsData")
+          ul#attachmentList
         
         .button-group.mt-lg
           button.button.button-secondary(type="button" onclick="window.history.back()") Cancel
@@ -66,12 +107,93 @@ block scripts
     document.addEventListener('DOMContentLoaded', function () {
       const serviceSelect = document.querySelector('select[name="serviceId"]');
       const amountInput = document.querySelector('input[name="amount"]');
+      const currencyInput = document.querySelector('input[name="currency"]');
+      const cardCheckbox = document.querySelector('input[name="allowCard"]');
+      const bankCheckbox = document.querySelector('input[name="allowBank"]');
+      const giftCheckbox = document.querySelector('input[name="allowGiftCard"]');
+      const paymentSourceSelect = document.querySelector('select[name="paymentSource"]');
+      const attachmentInput = document.getElementById('attachmentUploader');
+      const attachmentList = document.getElementById('attachmentList');
+      const attachmentsField = document.getElementById('attachmentsData');
+      const attachments = [];
       if (!serviceSelect || !amountInput) return;
-      serviceSelect.addEventListener('change', function () {
+
+      const applyServiceDefaults = () => {
         const selected = serviceSelect.options[serviceSelect.selectedIndex];
+        if (!selected) return;
         const rawAmount = selected.getAttribute('data-amount');
         if (rawAmount) {
           amountInput.value = rawAmount;
         }
+        const currency = selected.getAttribute('data-currency');
+        if (currency && currencyInput) {
+          currencyInput.value = currency;
+        }
+        if (cardCheckbox) {
+          cardCheckbox.checked = selected.getAttribute('data-card') !== 'false';
+        }
+        if (bankCheckbox) {
+          bankCheckbox.checked = selected.getAttribute('data-bank') === 'true';
+        }
+        if (giftCheckbox) {
+          giftCheckbox.checked = selected.getAttribute('data-gift') === 'true';
+        }
+        if (paymentSourceSelect) {
+          paymentSourceSelect.value = 'AUTO';
+        }
+      };
+
+      serviceSelect.addEventListener('change', function () {
+        applyServiceDefaults();
       });
+      applyServiceDefaults();
+
+      async function uploadFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch('/uploads', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+        return response.json();
+      }
+
+      function renderAttachments() {
+        attachmentList.innerHTML = '';
+        attachments.forEach((attachment) => {
+          const li = document.createElement('li');
+          const link = document.createElement('a');
+          link.href = attachment.url;
+          link.textContent = attachment.name;
+          link.target = '_blank';
+          link.rel = 'noopener';
+          li.appendChild(link);
+          attachmentList.appendChild(li);
+        });
+        if (attachmentsField) {
+          attachmentsField.value = JSON.stringify(attachments);
+        }
+      }
+
+      if (attachmentInput) {
+        attachmentInput.addEventListener('change', async (event) => {
+          const files = Array.from(event.target.files || []);
+          for (const file of files) {
+            try {
+              const uploaded = await uploadFile(file);
+              attachments.push({
+                name: uploaded.originalName,
+                url: uploaded.url,
+              });
+            } catch (error) {
+              alert(`Failed to upload ${file.name}`);
+            }
+          }
+          attachmentInput.value = '';
+          renderAttachments();
+        });
+      }
     });

@@ -24,6 +24,17 @@ const router = express.Router();
 
 const currencySchema = Joi.string().trim().uppercase().length(3);
 
+const attachmentSchema = Joi.array()
+  .items(
+    Joi.object({
+      name: Joi.string().trim().max(120).required(),
+      url: Joi.string().uri().required(),
+    })
+  )
+  .default([]);
+
+const booleanSchema = Joi.boolean().truthy('true', '1', 'on').falsy('false', '0', 'off');
+
 const createEstimateSchema = Joi.object({
   customerId: Joi.string().required(),
   locationId: Joi.string().required(),
@@ -35,6 +46,15 @@ const createEstimateSchema = Joi.object({
   taxPercent: Joi.number().min(0).max(100).default(0),
   surchargeAmount: Joi.number().integer().min(0).default(0),
   notes: Joi.string().allow('').max(500).default(''),
+  poNumber: Joi.string().allow('').max(64).default(''),
+  customNotes: Joi.string().allow('').max(500).default(''),
+  attachments: attachmentSchema,
+  allowCard: booleanSchema.default(true),
+  allowBank: booleanSchema.default(false),
+  allowGiftCard: booleanSchema.default(true),
+  paymentSource: Joi.string()
+    .valid('AUTO', 'CARD_ON_FILE', 'BANK_ON_FILE', 'NONE')
+    .default('AUTO'),
 });
 
 const calculateTotals = ({
@@ -90,10 +110,38 @@ router.get('/new/:locationId/:customerId', async (req, res, next) => {
 
 router.post('/create', async (req, res, next) => {
   try {
-    const payload = await createEstimateSchema.validateAsync(req.body, {
-      abortEarly: false,
-      stripUnknown: true,
+    let normalizedAttachments = [];
+    if (req.body.attachments && typeof req.body.attachments === 'string') {
+      try {
+        normalizedAttachments = JSON.parse(req.body.attachments);
+      } catch (error) {
+        normalizedAttachments = req.body.attachments
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((line) => {
+            const [name, url] = line.split('|').map((part) => part.trim());
+            return { name, url };
+          })
+          .filter((attachment) => attachment.name && attachment.url);
+      }
+    }
+
+    const booleanFields = ['allowCard', 'allowBank', 'allowGiftCard'];
+    const normalizedBody = { ...req.body, attachments: normalizedAttachments };
+    booleanFields.forEach((field) => {
+      normalizedBody[field] = Object.prototype.hasOwnProperty.call(req.body, field) ? 'true' : 'false';
     });
+
+    const payload = await createEstimateSchema.validateAsync(
+      {
+        ...normalizedBody,
+      },
+      {
+        abortEarly: false,
+        stripUnknown: true,
+      }
+    );
 
     const service = serviceCatalog.services.find((item) => item.id === payload.serviceId);
     if (!service) {
@@ -116,6 +164,13 @@ router.post('/create', async (req, res, next) => {
       taxPercent: payload.taxPercent,
       surchargeAmount: payload.surchargeAmount,
       notes: payload.notes,
+      poNumber: payload.poNumber,
+      customNotes: payload.customNotes,
+      attachments: payload.attachments,
+      allowCard: payload.allowCard,
+      allowBank: payload.allowBank,
+      allowGiftCard: payload.allowGiftCard,
+      paymentSource: payload.paymentSource,
       ...totals,
     });
 

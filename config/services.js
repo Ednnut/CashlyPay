@@ -6,22 +6,40 @@ const DEFAULT_SERVICES = [
     id: 'roof-inspection',
     name: 'Roof Inspection',
     priceAmount: 7500,
+    currency: 'USD',
     description: 'Comprehensive roof inspection with thermal imaging and moisture detection.',
     category: 'Inspection',
+    paymentMethods: {
+      card: true,
+      bankAccount: false,
+      squareGiftCard: true,
+    },
   },
   {
     id: 'roof-cleaning-premium',
     name: 'Roof Cleaning (2000–2500 sqft)',
     priceAmount: 37500,
+    currency: 'USD',
     description: 'Soft wash cleaning for medium-size roofs, includes moss treatment.',
     category: 'Cleaning',
+    paymentMethods: {
+      card: true,
+      bankAccount: false,
+      squareGiftCard: false,
+    },
   },
   {
     id: 'gutter-cleaning',
     name: 'Gutter Cleaning & Flush',
     priceAmount: 12000,
+    currency: 'USD',
     description: 'Full debris removal, downspout flush, and seal inspection.',
     category: 'Cleaning',
+    paymentMethods: {
+      card: true,
+      bankAccount: true,
+      squareGiftCard: false,
+    },
   },
 ];
 
