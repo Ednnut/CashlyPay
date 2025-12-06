@@ -1,5 +1,5 @@
 const db = require('./db');
-const defaultServices = require('../config/services');
+const defaultServices = require('../config/services').services;
 
 const toRow = (row) =>
   row && {
