@@ -17,7 +17,7 @@ limitations under the License.
 const express = require('express');
 const crypto = require('crypto');
 const { customersApi, invoicesApi, locationsApi } = require('../util/square-client');
-const serviceCatalog = require('../config/services');
+const serviceStore = require('../util/service-store');
 const estimateStore = require('../util/estimate-store');
 const subscriptionStore = require('../util/subscription-store');
 
@@ -52,7 +52,8 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
     ]);
 
     const { q, category, invoiceStatus, invoiceSearch } = req.query;
-    let serviceItems = serviceCatalog.services;
+    const allServices = serviceStore.list();
+    let serviceItems = [...allServices];
 
     const normalizedCategory = category && category.toLowerCase() !== 'all' ? category : null;
     const normalizedInvoiceStatus =
@@ -62,11 +63,11 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
     const normalizedInvoiceSearch = invoiceSearch ? invoiceSearch.trim() : '';
 
     if (normalizedCategory) {
-      serviceItems = serviceCatalog.findByCategory(category);
+      serviceItems = serviceStore.findByCategory(category);
     }
 
     if (q) {
-      const keywordFiltered = serviceCatalog.search(q);
+      const keywordFiltered = serviceStore.search(q);
       // When both filters exist, intersect the sets
       if (normalizedCategory) {
         const ids = new Set(serviceItems.map((item) => item.id));
@@ -140,10 +141,10 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
       serviceFilters: {
         q: q || '',
         category: normalizedCategory || 'all',
-        totalConfigured: serviceCatalog.services.length,
+        totalConfigured: allServices.length,
         categories: [
           'all',
-          ...new Set(serviceCatalog.services.map((service) => service.category).filter(Boolean)),
+          ...new Set(allServices.map((service) => service.category).filter(Boolean)),
         ],
       },
       invoiceFilters: {

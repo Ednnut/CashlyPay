@@ -1,0 +1,38 @@
+extends layout
+
+block content
+  .dashboard
+    header.section
+      .section-header
+        h1.page-title Operations Analytics
+
+    section.section
+      .grid-auto-fit
+        .card
+          h3.card-title Total Events
+          p.text-2xl #{metrics.totalEvents}
+        .card
+          h3.card-title Reminders Sent
+          p.text-2xl #{metrics.totalReminders}
+        .card
+          h3.card-title Approval Changes
+          p.text-2xl #{metrics.totalApprovals}
+        .card
+          h3.card-title Reminders Backlog
+          p.text-2xl #{metrics.reminderBacklog}
+
+    section.section
+      h3.section-title Recent Activity
+      if recentActivities && recentActivities.length
+        ul.activity-feed
+          each item in recentActivities
+            li.activity-feed__item
+              .activity-feed__meta
+                span.activity-feed__type #{item.type}
+                span.activity-feed__time #{item.timestamp}
+              if item.payload
+                pre.activity-feed__payload= JSON.stringify(item.payload, null, 2)
+              else
+                p No payload
+      else
+        p.text-secondary No activity logged yet.

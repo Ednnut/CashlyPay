@@ -17,7 +17,7 @@ limitations under the License.
 const express = require('express');
 const Joi = require('joi');
 const { customersApi, locationsApi, invoicesApi, ordersApi } = require('../util/square-client');
-const serviceCatalog = require('../config/services');
+const serviceStore = require('../util/service-store');
 const subscriptionStore = require('../util/subscription-store');
 
 const router = express.Router();
@@ -88,7 +88,7 @@ router.get('/new/:locationId/:customerId', async (req, res, next) => {
     res.render('subscription', {
       locationId,
       customer,
-      serviceItems: serviceCatalog.services,
+      serviceItems: serviceStore.list(),
       defaultCurrency: location.currency || 'USD',
     });
   } catch (error) {
@@ -114,7 +114,7 @@ router.post('/create', async (req, res, next) => {
   }
 
   try {
-    const service = serviceCatalog.services.find((item) => item.id === payload.serviceId);
+    const service = serviceStore.findById(payload.serviceId);
     if (!service) {
       const err = new Error('Selected service not available');
       err.status = 400;

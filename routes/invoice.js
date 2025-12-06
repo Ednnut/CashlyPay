@@ -21,6 +21,7 @@ const { cardsApi, ordersApi, invoicesApi, locationsApi } = require('../util/squa
 const estimateStore = require('../util/estimate-store');
 const reminderQueue = require('../util/reminder-queue');
 const activityStore = require('../util/activity-store');
+const approvalStore = require('../util/approval-store');
 
 const router = express.Router();
 
@@ -61,6 +62,14 @@ const convertEstimateSchema = Joi.object({
   customerId: Joi.string().required(),
   locationId: Joi.string().required(),
   idempotencyKey: Joi.string().trim().min(10).max(64).required(),
+});
+
+const approvalSchema = Joi.object({
+  invoiceId: Joi.string().required(),
+  locationId: Joi.string().required(),
+  customerId: Joi.string().required(),
+  action: Joi.string().valid('APPROVE', 'REJECT').required(),
+  note: Joi.string().allow('').max(500),
 });
 
 const validateRequest = (schema, payload) => {
@@ -221,6 +230,7 @@ router.get('/view/:locationId/:customerId/:invoiceId', async (req, res, next) =>
 
     // Render the invoice detail view page
     const activities = activityStore.listByInvoice(invoiceId);
+    const approval = approvalStore.getStatus(invoiceId) || { status: 'NOT_REQUIRED' };
 
     res.render('invoice', {
       locationId,
@@ -229,6 +239,7 @@ router.get('/view/:locationId/:customerId/:invoiceId', async (req, res, next) =>
       formatDate,
       idempotencyKey: crypto.randomUUID(),
       activities,
+      approval,
     });
   } catch (error) {
     next(error);
@@ -438,6 +449,7 @@ router.post('/create', async (req, res, next) => {
       }
     }
     reminderQueue.scheduleFromInvoice(invoice);
+    approvalStore.setStatus(invoice.id, 'PENDING');
     res.redirect(`view/${locationId}/${customerId}/${invoice.id}`);
   } catch (error) {
     next(error);
@@ -521,6 +533,7 @@ router.post('/convert-estimate', async (req, res, next) => {
     });
 
     reminderQueue.scheduleFromInvoice(invoice);
+    approvalStore.setStatus(invoice.id, 'PENDING');
     res.redirect(`view/${payload.locationId}/${payload.customerId}/${invoice.id}`);
   } catch (error) {
     next(error);
@@ -627,6 +640,34 @@ router.post('/delete', async (req, res, next) => {
 
     // invoice doesn't exist anymore, return to the invoice management page after delete the invoice
     res.redirect(`/management/${locationId}/${customerId}`);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/approval', async (req, res, next) => {
+  let payload;
+  try {
+    payload = await approvalSchema.validateAsync(req.body, { abortEarly: false, stripUnknown: true });
+  } catch (error) {
+    error.status = 400;
+    return next(error);
+  }
+
+  try {
+    const status = approvalStore.setStatus(
+      payload.invoiceId,
+      payload.action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
+      payload.note
+    );
+
+    activityStore.addEvent({
+      invoiceId: payload.invoiceId,
+      type: 'APPROVAL_STATUS_CHANGED',
+      payload: status,
+    });
+
+    res.redirect(`view/${payload.locationId}/${payload.customerId}/${payload.invoiceId}`);
   } catch (error) {
     next(error);
   }

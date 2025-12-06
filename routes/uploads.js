@@ -16,28 +16,12 @@ limitations under the License.
 
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const storage = require('../util/storage');
 
 const router = express.Router();
 
-const UPLOAD_DIR = path.join(__dirname, '../public/uploads');
-
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (_, __, cb) => cb(null, UPLOAD_DIR),
-  filename: (_, file, cb) => {
-    const safeName = file.originalname.replace(/\s+/g, '-');
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`;
-    cb(null, uniqueName);
-  },
-});
-
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024,
   },
@@ -48,11 +32,13 @@ router.post('/', upload.single('file'), (req, res) => {
     return res.status(400).json({ message: 'No file uploaded' });
   }
 
+  const saved = storage.saveFile(req.file);
+
   return res.status(201).json({
     originalName: req.file.originalname,
-    fileName: req.file.filename,
+    fileName: saved.fileName,
     size: req.file.size,
-    url: `/uploads/${req.file.filename}`,
+    url: saved.url,
   });
 });
 

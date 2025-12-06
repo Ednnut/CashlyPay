@@ -105,9 +105,13 @@ This Express.js project is organized as follows:
   - invoice.js. Provides routes to handle all the requests related to the invoice management (create, publish, cancel, delete).
   - management.js. Provides routes to render a list of contractor services that customer can purchase and also list all the invoices for the selected customer.
   - customer.js. Provides routes for creating new customers directly from the UI instead of seeding them via the CLI.
-- **/config/services.js.** Defines the service catalog displayed on the management page. You can override it by creating `config/services.json`
-  or pointing `SERVICES_CONFIG_PATH` to another JSON file. Each item supports `id`, `name`, `priceAmount` (in cents), optional `currency`, `description`,
-  `category`, and `paymentMethods` booleans (`card`, `bankAccount`, `squareGiftCard`) that seed the per-invoice payment toggles.
+  - admin.js. Surfaces operations tooling (currently the reminder queue dashboard).
+  - analytics.js. Aggregates activity log metrics for the `/analytics` dashboard.
+- **/config/services.js.** Defines the default service catalog used to seed the local database. Override it by creating `config/services.json` or pointing
+  `SERVICES_CONFIG_PATH` to another JSON file. Each item supports `id`, `name`, `priceAmount` (in cents), optional `currency`, `description`, `category`, and
+  `paymentMethods` booleans (`card`, `bankAccount`, `squareGiftCard`) that seed the per-invoice payment toggles.
+- **/util/db.js.** Initializes the local SQLite database (`data/app.db`). Swap this module for a Postgres client when moving to production—the rest of the
+  data layer (service store, activity store) depends on it.
 - **ENV.**
   - `SERVICES_CONFIG_PATH` (optional) – path to a JSON file with an array of service objects to show in the UI.
 - **/util.** The utility code initializes the Square SDK client.
@@ -129,6 +133,7 @@ When you build links or integrate this page elsewhere, you can compose these que
 - Each estimate allows the operator to pick currency plus accepted payment methods (card/digital wallet, bank transfer, gift card) and a preferred payment source (auto/card-on-file/bank/manual).
 - Converting an estimate invokes `POST /invoice/convert-estimate`, which automatically creates a Square order with discounts/taxes/service charges and schedules deposit/balance payment requests on the resulting invoice while honoring the saved payment preferences.
 - Converted estimates reference the final invoice for fast auditing. Estimates can include purchase-order numbers, customer-facing notes, and attachment uploads (handled via `/uploads` and stored under `public/uploads/`), which are carried forward as custom fields on the resulting invoice.
+  - Uploaded files are handled by `routes/uploads.js` and abstracted through `util/storage.js`, making it easy to swap the backing store (for example, S3 blobs) without touching form logic.
 
 ### Recurring subscriptions
 
@@ -141,6 +146,7 @@ When you build links or integrate this page elsewhere, you can compose these que
 - Square webhook callbacks should be pointed to `POST /webhooks/square`. Events are persisted via `util/activity-store.js`; reminders for upcoming/overdue invoices are scheduled through `util/reminder-queue.js`. Set `SQUARE_WEBHOOK_SIGNATURE_KEY` in `.env` to enable signature verification.
 - Reminder jobs are processed in-process on an interval and logged as activity entries so finance teams can review what was sent and when.
 - Activity data can be reused to build timelines or analytics dashboards for each invoice.
+- Draft invoices now flow through an approval workflow tracked in `data/approvals.json` via `util/approval-store.js`. Approval status is surfaced on the invoice detail page, and publishing is blocked until approval is granted. Use `/admin/reminders` to monitor reminder jobs, and `/analytics` to review KPI snapshots. Swap the stores with Postgres-backed implementations when moving beyond the local SQLite setup.
 
 ## Application flow
 

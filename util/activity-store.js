@@ -1,49 +1,42 @@
-const fs = require('fs');
-const path = require('path');
+const db = require('./db');
 
-const DATA_FILE = path.join(__dirname, '../data/activity.json');
-
-const ensureFile = () => {
-  if (!fs.exists(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify([]), 'utf-8');
-  }
-};
-
-const readAll = () => {
-  ensureFile();
-  const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn(`Failed to parse activity log: ${error.message}`);
-  }
-  return [];
-};
-
-const writeAll = (entries) => {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(entries, null, 2));
-};
+const insertStmt = db.prepare(
+  'INSERT INTO activity_log (id, invoice_id, type, payload, timestamp) VALUES (?, ?, ?, ?, ?)' 
+);
 
 const addEvent = (event) => {
-  const entries = readAll();
-  entries.push({
-    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    timestamp: new Date().toISOString(),
-    ...event,
-  });
-  writeAll(entries);
+  const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  insertStmt.run(id, event.invoiceId || null, event.type, JSON.stringify(event.payload || null), new Date().toISOString());
 };
 
 const listByInvoice = (invoiceId) => {
-  const entries = readAll();
-  return entries.filter((entry) => entry.invoiceId === invoiceId);
+  return db
+    .prepare('SELECT * FROM activity_log WHERE invoice_id = ? ORDER BY timestamp ASC')
+    .all(invoiceId)
+    .map((row) => ({
+      id: row.id,
+      invoiceId: row.invoice_id,
+      type: row.type,
+      payload: row.payload ? JSON.parse(row.payload) : null,
+      timestamp: row.timestamp,
+    }));
+};
+
+const listAll = () => {
+  return db
+    .prepare('SELECT * FROM activity_log ORDER BY timestamp ASC')
+    .all()
+    .map((row) => ({
+      id: row.id,
+      invoiceId: row.invoice_id,
+      type: row.type,
+      payload: row.payload ? JSON.parse(row.payload) : null,
+      timestamp: row.timestamp,
+    }));
 };
 
 module.exports = {
   addEvent,
   listByInvoice,
+  listAll,
 };

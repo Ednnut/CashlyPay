@@ -1,0 +1,28 @@
+extends layout
+
+block content
+  .dashboard
+    header.section
+      .section-header
+        h1.page-title Reminder Queue
+        form(action="/admin/reminders/run" method="post")
+          button.button.button-secondary(type="submit") Process Now
+
+    section.section
+      if reminders && reminders.length
+        table.data-table
+          thead
+            tr
+              th Type
+              th Invoice
+              th Run At
+              th Attempts
+          tbody
+            each reminder in reminders
+              tr
+                td #{reminder.type}
+                td #{reminder.invoiceId}
+                td #{reminder.runAt}
+                td #{reminder.attempts || 0}
+      else
+        p.text-secondary No reminders scheduled.
