@@ -129,26 +129,29 @@
 
 /* Secondary Button - Dark Mode Optimized */
 .button-secondary {
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(23, 23, 23, 0.9);
   color: #ffffff;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
 .button-secondary::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.02)
+  );
   opacity: 0;
   transition: opacity 200ms ease;
 }
 
 .button-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: rgba(35, 35, 35, 0.95);
   transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.26);
 }
 
 .button-secondary:hover::before {
@@ -156,9 +159,16 @@
 }
 
 .button-secondary:active {
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: rgba(15, 15, 15, 0.95);
   transform: translateY(0);
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.button-danger {
+  background-color: #ff3b30;
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(255, 59, 48, 0.25);
+  min-width: 160px;
 }
 
 /* Ghost Button */
@@ -282,4 +292,11 @@
 .button-icon-only {
   padding: var(--space-sm);
   width: 48px;
+}
+.button-secondary {
+  background-color: rgba(23, 23, 23, 0.9);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+  min-width: 160px;
 }

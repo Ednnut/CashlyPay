@@ -133,25 +133,53 @@ tfoot tr {
 
 /* Fixed Bottom Bar */
 .fixed-bottom-bar {
-  position: fixed;
+  position: sticky;
   bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--theme-surface-overlay);
-  backdrop-filter: blur(8px);
-  border-top: 1px solid var(--theme-border);
-  padding: var(--space-md) 0;
-  z-index: 100;
+  margin-top: var(--space-2xl);
+  background: radial-gradient(circle at top, rgba(12, 12, 12, 0.95), rgba(8, 8, 8, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  z-index: 10;
+  box-shadow:
+    0 15px 35px rgba(0, 0, 0, 0.45),
+    0 -10px 20px rgba(0, 0, 0, 0.45);
 }
 
 .button-group {
   display: flex;
   gap: var(--space-sm);
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .button-group form {
   margin-bottom: 0;
+}
+
+.fixed-bottom-bar .button,
+.fixed-bottom-bar button,
+.fixed-bottom-bar form,
+.fixed-bottom-bar .compact-action {
+  flex: 0 1 200px;
+  max-width: 220px;
+  align-self: center;
+}
+
+@media (max-width: 768px) {
+  .fixed-bottom-bar {
+    position: static;
+    border-radius: var(--radius-lg);
+  }
+
+  .fixed-bottom-bar .button-group {
+    flex-direction: column;
+  }
+
+  .fixed-bottom-bar .button,
+  .fixed-bottom-bar button {
+    width: 100%;
+  }
 }
 
 /* Badges */
