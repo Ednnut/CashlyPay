@@ -17,29 +17,47 @@ block styles
   link(rel="stylesheet" href="/stylesheets/pages/management.css")
 
 block content
+  - const totalInvoices = invoices ? invoices.length : 0
+  - const draftInvoices = invoices ? invoices.filter((inv) => inv.status === 'DRAFT').length : 0
+  - const overdueInvoices = invoices ? invoices.filter((inv) => inv.status === 'OVERDUE').length : 0
+  - const totalEstimates = estimates ? estimates.length : 0
+  - const totalSubscriptions = subscriptions ? subscriptions.length : 0
   .dashboard
-    //- Page Header
-    header.section
+    section.hero
       .section-header
-        a.button.button-icon(href="/")
-          svg(width="20" height="20" viewBox="0 0 20 20" fill="none")
-            path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-          span Back to Customers
-        
-        h1.page-title Customer Details
-      
-      .section-actions
-        if customer.cards && customer.cards.length > 0
-          button.button.button-secondary
-            svg.icon(width="20" height="20" viewBox="0 0 20 20")
-              path(d="M3 5a2 2 0 012-2h10a2 2 0 012 2v2H3V5zm0 4v6a2 2 0 002 2h10a2 2 0 002-2V9H3zm3 4h4m-4-2h2" stroke="currentColor" stroke-width="2" stroke-linecap="round")
-            span Card on file ending in #{customer.cards[0].last4}
-        else
-          button.button.button-secondary
-            svg.icon(width="20" height="20" viewBox="0 0 20 20")
-              path(d="M3 5a2 2 0 012-2h10a2 2 0 012 2v2H3V5zm0 4v6a2 2 0 002 2h10a2 2 0 002-2V9H3zm3 2h8" stroke="currentColor" stroke-width="2" stroke-linecap="round")
-            span No card on file
-    
+        .hero-left
+          a.button.button-icon(href="/")
+            svg(width="20" height="20" viewBox="0 0 20 20" fill="none")
+              path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+            span Back to Customers
+          h1.page-title Customer Command Center
+          p.page-subtitle End-to-end view of this customer: invoices, estimates, subscriptions, and payment posture.
+        .hero-actions
+          a.button.button-primary(href=`/estimate/new/${locationId}/${customer.id}`) New Estimate
+          a.button.button-secondary(href=`/subscription/new/${locationId}/${customer.id}`) New Subscription
+          a.button.button-ghost(href="/analytics") Analytics
+      .metric-grid
+        .metric-card
+          span.metric-label Invoices
+          span.metric-value #{totalInvoices}
+          span.metric-trend #{draftInvoices} draft · #{overdueInvoices} overdue
+        .metric-card
+          span.metric-label Estimates
+          span.metric-value #{totalEstimates}
+          span.metric-trend Ready to convert
+        .metric-card
+          span.metric-label Subscriptions
+          span.metric-value #{totalSubscriptions}
+          span.metric-trend Recurring revenue
+        .metric-card
+          span.metric-label Payment Profile
+          if customer.cards && customer.cards.length
+            span.metric-value Card on file
+            span.metric-trend #{customer.cards[0].cardBrand} •••• #{customer.cards[0].last4}
+          else
+            span.metric-value Manual
+            span.metric-trend Add payment method
+
     //- Customer Info
     .customer-card.mb-xl
       .customer-header

@@ -39,22 +39,39 @@ html(lang="en" class="dark")
     
     //- Sidebar
     aside.sidebar
-      .brand
+      .sidebar__header
         img.brand__logo(src="/images/logo.svg" alt="Cashly")
-        h1.brand__name Cashly
-      
+        .brand__text
+          h1.brand__name Cashly
+          p.brand__tagline Finance OS
+      .sidebar__profile
+        .avatar A
+        .profile__meta
+          span.profile__name Ops Team
+          span.profile__role Admin
+        a.button.button-ghost.button-sm(href="/analytics")
+          svg(width="16" height="16" viewBox="0 0 24 24" fill="none")
+            path(d="M4 12h16M4 6h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round")
+          span Insights
+
       nav.nav
+        p.nav-section Heading
         a.nav-item(href="/" class=currentPath === '/' ? 'active' : '')
           svg: use(href="#icon-dashboard")
           span Dashboard
-        
-        a.nav-item(href="/invoice" class=currentPath === '/invoice' ? 'active' : '')
+        a.nav-item(href="/management" class=currentPath?.startsWith('/management') ? 'active' : '')
           svg: use(href="#icon-invoice")
-          span Invoices
-        
-        a.nav-item(href="/management" class=currentPath === '/management' ? 'active' : '')
+          span Customers
+        a.nav-item(href="/analytics" class=currentPath?.startsWith('/analytics') ? 'active' : '')
+          svg: use(href="#icon-dashboard")
+          span Analytics
+        a.nav-item(href="/admin/reminders" class=currentPath?.startsWith('/admin') ? 'active' : '')
           svg: use(href="#icon-invoice")
-          span Management
+          span Reminders
+        p.nav-section Actions
+        a.nav-item(href="/customers/new")
+          svg: use(href="#icon-dashboard")
+          span Add Customer
     
     //- Main Content
     main.content

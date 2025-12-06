@@ -45,16 +45,11 @@ Before you begin, note the following:
 
     ```
     SQUARE_ACCESS_TOKEN=your-access-token
-    ADMIN_API_TOKEN=your-long-random-token
     ```
 
     - Replace the placeholder for `SQUARE_ACCESS_TOKEN` with your
       own production or sandbox credentials. For more help, see our [guide on how to get
       your credentials](https://developer.squareup.com/docs/orders-api/quick-start/step-1).
-    - `ADMIN_API_TOKEN` gates the sensitive management and invoice routes. Every client request
-      to `/management/*` and `/invoice/*` must include either an `Authorization: Bearer <token>` header
-      or an `x-api-key` header whose value matches this token. When the variable is omitted in development,
-      the middleware allows all requests but logs a warning. Always define it in staging/production.
 
     **WARNING**: Remember to use your own credentials only for testing the sample app.
     If you plan to make a version of this sample app available for your own purposes,
@@ -125,6 +120,15 @@ The `/management/:locationId/:customerId` page supports rich filtering through q
 - `invoiceSearch` and `invoiceStatus` refine the invoice list. Status is case-insensitive and accepts values such as `all`, `draft`, `scheduled`, `unpaid`, `paid`, `overdue`, or `canceled`.
 
 When you build links or integrate this page elsewhere, you can compose these query parameters directly to pre-filter the experience for a specific workflow.
+
+## Home dashboard
+
+The `/` route now surfaces organization-wide insights: hero KPIs for customer counts, quick actions (reminder queue, analytics, customer creation), and an upgraded customer directory with richer badges. No configuration is required—the metrics derive from the synced Square data and the local database.
+
+## Analytics and admin
+
+- `/analytics` now provides KPI cards (events, reminders sent, approvals, backlog) plus a recent activity feed, complete with type/timeframe filters.
+- `/admin/reminders` exposes the reminder queue for visibility and manual runs.
 
 ## Estimates and advanced invoices
 

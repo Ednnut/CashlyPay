@@ -597,3 +597,125 @@
     align-items: stretch;
   }
 }
+
+.hero {
+  background: var(--theme-surface);
+  border-bottom: 1px solid var(--theme-border);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+.hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.metric-grid {
+  margin-top: var(--space-lg);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-md);
+}
+
+.metric-card {
+  background: var(--theme-surface-raised);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+
+.metric-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.metric-value {
+  display: block;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.metric-trend {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* Wizard styles for estimate/subscription flows */
+.wizard {
+  background: var(--theme-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--theme-border);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.wizard__steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-md);
+}
+
+.wizard-step {
+  background: var(--theme-surface-raised);
+  border: 1px dashed var(--theme-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  color: var(--text-secondary);
+}
+
+.wizard-step.active {
+  border-color: var(--theme-accent);
+  background: rgba(0, 213, 75, 0.08);
+  color: var(--text-primary);
+}
+
+.step-index {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.card-title {
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.wizard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--theme-border);
+}
+
+.wizard-summary {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}

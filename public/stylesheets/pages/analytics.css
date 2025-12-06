@@ -1,0 +1,96 @@
+.analytics-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
+}
+
+.analytics-card {
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+}
+
+.analytics-card .label {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.analytics-card .value {
+  display: block;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.activity-list {
+  margin-top: var(--space-lg);
+  display: grid;
+  gap: var(--space-md);
+}
+
+.activity-item {
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
+.activity-meta {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.filters {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.sparkline {
+  margin: var(--space-sm) 0;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, rgba(0,213,75,0.4) 10%, rgba(0,122,255,0.4) 30%, rgba(0,213,75,0.6) 60%, rgba(0,122,255,0.3) 90%);
+  position: relative;
+  overflow: hidden;
+}
+
+.sparkline::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-size: 16px 100%;
+  background-image: linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px);
+  opacity: 0.4;
+}
+
+.sparkline--reminders {
+  background: linear-gradient(90deg, rgba(0,213,75,0.6), rgba(0,213,75,0.2));
+}
+
+.sparkline--approvals {
+  background: linear-gradient(90deg, rgba(255,204,0,0.5), rgba(0,122,255,0.3));
+}
+
+.sparkline--backlog {
+  background: linear-gradient(90deg, rgba(255,59,48,0.6), rgba(255,204,0,0.3));
+}

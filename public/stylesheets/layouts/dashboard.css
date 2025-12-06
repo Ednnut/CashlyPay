@@ -169,3 +169,64 @@
 .table tr:hover td {
   background-color: var(--theme-surface-raised);
 }
+
+.sidebar__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--theme-divider);
+}
+
+.brand__text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand__tagline {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.sidebar__profile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--theme-divider);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--theme-accent);
+  color: #000;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.profile__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+}
+
+.profile__name {
+  font-weight: 600;
+}
+
+.profile__role {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.nav-section {
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--text-xs);
+  margin: var(--space-sm) var(--space-lg) var(--space-xs);
+}

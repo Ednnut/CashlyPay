@@ -1,38 +1,67 @@
 extends layout
 
+block styles
+  link(rel="stylesheet" href="/stylesheets/pages/analytics.css")
+
 block content
   .dashboard
     header.section
-      .section-header
-        h1.page-title Operations Analytics
+      .analytics-header
+        h1.page-title Ops & Billing Analytics
+        p.text-secondary Quick health check on reminders, approvals, and activity.
+        .hero-actions
+          a.button.button-primary(href="/admin/reminders") Reminder Queue
+          a.button.button-secondary(href="/analytics") Refresh
 
     section.section
-      .grid-auto-fit
-        .card
-          h3.card-title Total Events
-          p.text-2xl #{metrics.totalEvents}
-        .card
-          h3.card-title Reminders Sent
-          p.text-2xl #{metrics.totalReminders}
-        .card
-          h3.card-title Approval Changes
-          p.text-2xl #{metrics.totalApprovals}
-        .card
-          h3.card-title Reminders Backlog
-          p.text-2xl #{metrics.reminderBacklog}
+      form.filters(method="get" action="/analytics")
+        label
+          span.text-secondary Filter activity by type
+          select(name="type" onchange="this.form.submit()")
+            option(value="ALL" selected=filters.type === 'ALL') All Events
+            option(value="REMINDER_SENT" selected=filters.type === 'REMINDER_SENT') Reminders
+            option(value="APPROVAL_STATUS_CHANGED" selected=filters.type === 'APPROVAL_STATUS_CHANGED') Approvals
+        label
+          span.text-secondary Timeframe
+          select(name="range" onchange="this.form.submit()")
+            option(value="24h" selected=filters.range === '24h') Last 24h
+            option(value="7d" selected=filters.range === '7d') Last 7d
+            option(value="30d" selected=filters.range === '30d') Last 30d
+            option(value="all" selected=filters.range === 'all') All time
+      .analytics-grid
+        .analytics-card
+          span.label Total Events
+          span.value #{metrics.totalEvents}
+          div.sparkline.sparkline--events
+          span.text-secondary Includes all activity log entries
+        .analytics-card
+          span.label Reminders Sent
+          span.value #{metrics.totalReminders}
+          div.sparkline.sparkline--reminders
+          span.text-secondary Lifecycle nudges dispatched
+        .analytics-card
+          span.label Approval Changes
+          span.value #{metrics.totalApprovals}
+          div.sparkline.sparkline--approvals
+          span.text-secondary Approvals/rejections logged
+        .analytics-card
+          span.label Reminders Backlog
+          span.value #{metrics.reminderBacklog}
+          div.sparkline.sparkline--backlog
+          span.text-secondary Scheduled jobs pending
 
     section.section
       h3.section-title Recent Activity
       if recentActivities && recentActivities.length
-        ul.activity-feed
+        .activity-list
           each item in recentActivities
-            li.activity-feed__item
-              .activity-feed__meta
-                span.activity-feed__type #{item.type}
-                span.activity-feed__time #{item.timestamp}
+            .activity-item
+              .activity-meta
+                span #{item.type}
+                span #{item.timestamp}
               if item.payload
-                pre.activity-feed__payload= JSON.stringify(item.payload, null, 2)
+                pre= JSON.stringify(item.payload, null, 2)
               else
-                p No payload
+                p.text-secondary No payload
       else
         p.text-secondary No activity logged yet.

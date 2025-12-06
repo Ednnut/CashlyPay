@@ -26,6 +26,7 @@ const rateLimit = require('express-rate-limit');
 const routes = require('./routes/index');
 const webhookRoutes = require('./routes/webhooks');
 const app = express();
+app.set('trust proxy', 1);
 
 // Node creates cashed instance of square-client, on initial load
 require('./util/square-client');

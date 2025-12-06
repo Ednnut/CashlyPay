@@ -29,16 +29,37 @@ block content
             span Back to Management
           
           h1.page-title Invoice Details
-        
-        .flex.items-center.gap-sm
-          if invoice.status === "DRAFT"
-            span.status-badge.status-badge--pending Draft
-          else if invoice.status === "PAID"
-            span.status-badge.status-badge--paid Paid
-          else if invoice.status === "OVERDUE"
-            span.status-badge.status-badge--overdue Overdue
-          else
-            span.status-badge #{invoice.status}
+        .invoice-hero
+          .hero-row
+            .badge-group
+              if invoice.status === "DRAFT"
+                span.status-badge.status-badge--pending Draft
+              else if invoice.status === "PAID"
+                span.status-badge.status-badge--paid Paid
+              else if invoice.status === "OVERDUE"
+                span.status-badge.status-badge--overdue Overdue
+              else
+                span.status-badge #{invoice.status}
+              span.badge.badge-subtle Approval: #{approval.status}
+            .hero-actions.flex.gap-sm
+              if invoice.publicUrl
+                a.button.button-secondary(href=invoice.publicUrl target="_blank" rel="noopener")
+                  span View Public Link
+              a.button.button-ghost(href=`/management/${locationId}/${customerId}`) Customer Overview
+          .hero-metrics
+            .metric-card
+              span.metric-label Amount Due
+              span.metric-value $#{(parseInt(invoice.paymentRequests[0].computedAmountMoney.amount) / 100).toFixed(2)}
+              span.metric-trend Due #{formatDate(invoice.paymentRequests[0].dueDate)}
+            .metric-card
+              span.metric-label Created
+              span.metric-value #{formatDate(invoice.createdAt || new Date().toISOString())}
+              if invoice.scheduledAt
+                span.metric-trend Scheduled #{formatDate(invoice.scheduledAt)}
+            .metric-card
+              span.metric-label Payment Method
+              span.metric-value #{invoice.paymentRequests[0].automaticPaymentSource || 'NONE'}
+              span.metric-trend #{invoice.paymentRequests[0].automaticPaymentSource === 'CARD_ON_FILE' ? 'Auto-charge' : 'Manual/Email'}
           span.badge.badge-subtle Approval: #{approval.status}
       //- Invoice Content
       .container.animate-fade-in
