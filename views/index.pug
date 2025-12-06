@@ -22,9 +22,31 @@ block content
   - const cardCustomers = customers.filter((customer) => customer.cards && customer.cards.length)
   - const manualCustomers = totalCustomers - cardCustomers.length
   - const lastCustomer = customers[0]
+  - const statusLabel = envStatus?.label || 'Testing'
+  - const statusTone = envStatus?.tone || 'testing'
+  - const primaryCustomerId = lastCustomer?.id
+  - const managementHref = primaryCustomerId ? `/management/${locationId}/${primaryCustomerId}` : '/customers/new'
+  - const invoiceHref = managementHref
+  - const estimateHref = primaryCustomerId ? `/estimate/new/${locationId}/${primaryCustomerId}` : '/customers/new'
+  - const subscriptionHref = primaryCustomerId ? `/subscription/new/${locationId}/${primaryCustomerId}` : '/customers/new'
   main.dashboard
     section.hero
       .container
+        .hero__branding-bar
+          .hero__branding-left
+            button.hero__nav-trigger(type="button" aria-label="Open navigation panel")
+              span.bar
+              span.bar
+              span.bar
+            .logo-mark
+              span.logo-initial C
+            .branding-copy
+              span.brand-name CashlyPay
+              span.brand-tag Finance OS
+          .hero__status-chip(class=`hero__status-chip--${statusTone}`)
+            span.dot
+            span.label #{statusLabel === 'Live' ? 'Live Environment' : 'Testing Environment'}
+            span.meta #{statusLabel === 'Live' ? 'Production data' : 'Sandbox data'}
         .hero__content
           span.hero__eyebrow CashlyPay Command Center
           h1.hero__title Modern Customer Workspace
@@ -111,6 +133,60 @@ block content
           .empty-state
             svg(width="64" height="64" viewBox="0 0 24 24" fill="none")
               path(d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 100-16 8 8 0 000 16zm-1-11h2v5h-2v-5zm0 6h2v2h-2v-2z" fill="currentColor")
-            h3 No customers yet
-            p Create a customer to unlock invoices, subscriptions, and analytics.
-            a.button.button-primary(href="/customers/new") Create your first customer
+        h3 No customers yet
+        p Create a customer to unlock invoices, subscriptions, and analytics.
+        a.button.button-primary(href="/customers/new") Create your first customer
+
+  .command-drawer
+    .command-drawer__panel
+      .command-drawer__header
+        .logo-mark
+          span.logo-initial C
+        .drawer-meta
+          span.drawer-title CashlyPay OS
+          span.drawer-subtitle Navigate & automate
+        button.command-drawer__close(type="button" aria-label="Close navigation panel")
+          span
+      nav.command-drawer__nav
+        ul
+          li: a(href="/") Dashboard
+          li: a(href=managementHref) Management
+          li: a(href=invoiceHref) Invoices
+          li: a(href=estimateHref) Estimates
+          li: a(href=subscriptionHref) Subscriptions
+          li: a(href="/analytics") Analytics
+          li: a(href="/admin/reminders") Reminder Queue
+          li: a(href="/admin/reminders") Settings
+      .command-drawer__actions
+        a.button.button-primary(href=managementHref) Create Invoice
+        a.button.button-secondary(href="/admin/reminders") Run Reminder Queue
+
+block append scripts
+  script.
+    document.addEventListener('DOMContentLoaded', function () {
+      const drawer = document.querySelector('.command-drawer');
+      const trigger = document.querySelector('.hero__nav-trigger');
+      const closeBtn = document.querySelector('.command-drawer__close');
+      const toggleDrawer = (shouldOpen) => {
+        if (!drawer) return;
+        if (shouldOpen) {
+          drawer.classList.add('is-open');
+          document.body.classList.add('drawer-open');
+        } else {
+          drawer.classList.remove('is-open');
+          document.body.classList.remove('drawer-open');
+        }
+      };
+      trigger?.addEventListener('click', () => toggleDrawer(true));
+      closeBtn?.addEventListener('click', () => toggleDrawer(false));
+      drawer?.addEventListener('click', (event) => {
+        if (event.target === drawer) {
+          toggleDrawer(false);
+        }
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && drawer?.classList.contains('is-open')) {
+          toggleDrawer(false);
+        }
+      });
+    });

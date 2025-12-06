@@ -1,18 +1,18 @@
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
 
-const DATA_FILE = path.join(__dirname, '../data/estimates.json');
+const DATA_FILE = path.join(__dirname, "../data/estimates.json");
 
 const ensureDataFile = () => {
   if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify([]), 'utf-8');
+    fs.writeFileSync(DATA_FILE, JSON.stringify([]), "utf-8");
   }
 };
 
 const loadEstimates = () => {
   ensureDataFile();
-  const fileContents = fs.readFileSync(DATA_FILE, 'utf-8');
+  const fileContents = fs.readFileSync(DATA_FILE, "utf-8");
   try {
     const parsed = JSON.parse(fileContents);
     if (Array.isArray(parsed)) {
@@ -35,7 +35,7 @@ const createEstimate = (estimate) => {
   const newEstimate = {
     ...estimate,
     id: crypto.randomUUID(),
-    status: 'draft',
+    status: "draft",
     createdAt: new Date().toISOString(),
   };
   estimates.push(newEstimate);

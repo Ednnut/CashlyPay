@@ -1,9 +1,9 @@
 /* eslint-env jest */
 
-require('dotenv').config({ path: '.env.test' });
+require("dotenv").config({ path: ".env.test" });
 
 // Mock Square client
-jest.mock('square', () => ({
+jest.mock("square", () => ({
   Client: jest.fn(() => ({
     customersApi: {
       createCustomer: jest.fn(),

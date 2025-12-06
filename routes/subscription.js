@@ -14,11 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const express = require('express');
-const Joi = require('joi');
-const { customersApi, locationsApi, invoicesApi, ordersApi } = require('../util/square-client');
-const serviceStore = require('../util/service-store');
-const subscriptionStore = require('../util/subscription-store');
+const express = require("express");
+const Joi = require("joi");
+const {
+  customersApi,
+  locationsApi,
+  invoicesApi,
+  ordersApi,
+} = require("../util/square-client");
+const serviceStore = require("../util/service-store");
+const subscriptionStore = require("../util/subscription-store");
 
 const router = express.Router();
 
@@ -28,39 +33,41 @@ const recurringSchema = Joi.object({
   serviceId: Joi.string().required(),
   amount: Joi.number().integer().positive().required(),
   currency: Joi.string().length(3).uppercase().required(),
-  frequency: Joi.string().valid('WEEKLY', 'MONTHLY').required(),
+  frequency: Joi.string().valid("WEEKLY", "MONTHLY").required(),
   startDate: Joi.string().isoDate().required(),
   occurrences: Joi.number().integer().min(1).max(24).required(),
-  paymentMethod: Joi.string().valid('CARD_ON_FILE', 'BANK_ON_FILE', 'MANUAL').required(),
+  paymentMethod: Joi.string()
+    .valid("CARD_ON_FILE", "BANK_ON_FILE", "MANUAL")
+    .required(),
   allowCard: Joi.boolean().default(true),
   allowBank: Joi.boolean().default(false),
   allowGiftCard: Joi.boolean().default(true),
-  usageNotes: Joi.string().allow('').max(500).default(''),
+  usageNotes: Joi.string().allow("").max(500).default(""),
 });
 
 const buildSchedule = (frequency, startDate) => {
   const schedule = {
     startDate,
-    timezone: 'UTC',
+    timezone: "UTC",
     recurrence: {
       period: frequency,
     },
   };
 
   const start = new Date(startDate);
-  if (frequency === 'MONTHLY') {
+  if (frequency === "MONTHLY") {
     schedule.recurrence.monthlyRecurrence = {
       dayOfMonth: start.getUTCDate(),
     };
-  } else if (frequency === 'WEEKLY') {
+  } else if (frequency === "WEEKLY") {
     const weekdays = [
-      'SUNDAY',
-      'MONDAY',
-      'TUESDAY',
-      'WEDNESDAY',
-      'THURSDAY',
-      'FRIDAY',
-      'SATURDAY',
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
     ];
     schedule.recurrence.weeklyRecurrence = {
       dayOfWeek: weekdays[start.getUTCDay()],
@@ -70,7 +77,7 @@ const buildSchedule = (frequency, startDate) => {
   return schedule;
 };
 
-router.get('/new/:locationId/:customerId', async (req, res, next) => {
+router.get("/new/:locationId/:customerId", async (req, res, next) => {
   const { locationId, customerId } = req.params;
   try {
     const [
@@ -85,24 +92,29 @@ router.get('/new/:locationId/:customerId', async (req, res, next) => {
       locationsApi.retrieveLocation(locationId),
     ]);
 
-    res.render('subscription', {
+    res.render("subscription", {
       locationId,
       customer,
       serviceItems: serviceStore.list(),
-      defaultCurrency: location.currency || 'USD',
+      defaultCurrency: location.currency || "USD",
     });
   } catch (error) {
     next(error);
   }
 });
 
-router.post('/create', async (req, res, next) => {
+router.post("/create", async (req, res, next) => {
   let payload;
   try {
-    const booleanFields = ['allowCard', 'allowBank', 'allowGiftCard'];
+    const booleanFields = ["allowCard", "allowBank", "allowGiftCard"];
     const normalizedBody = { ...req.body };
     booleanFields.forEach((field) => {
-      normalizedBody[field] = Object.prototype.hasOwnProperty.call(req.body, field) ? 'true' : 'false';
+      normalizedBody[field] = Object.prototype.hasOwnProperty.call(
+        req.body,
+        field,
+      )
+        ? "true"
+        : "false";
     });
     payload = await recurringSchema.validateAsync(normalizedBody, {
       abortEarly: false,
@@ -116,7 +128,7 @@ router.post('/create', async (req, res, next) => {
   try {
     const service = serviceStore.findById(payload.serviceId);
     if (!service) {
-      const err = new Error('Selected service not available');
+      const err = new Error("Selected service not available");
       err.status = 400;
       throw err;
     }
@@ -128,7 +140,7 @@ router.post('/create', async (req, res, next) => {
         lineItems: [
           {
             name: `${service.name} Subscription`,
-            quantity: '1',
+            quantity: "1",
             basePriceMoney: {
               amount: payload.amount,
               currency: payload.currency,
@@ -145,12 +157,13 @@ router.post('/create', async (req, res, next) => {
 
     const paymentRequests = [
       {
-        requestType: 'BALANCE',
+        requestType: "BALANCE",
         dueDate: payload.startDate,
-        automaticPaymentSource: payload.paymentMethod === 'MANUAL' ? 'NONE' : payload.paymentMethod,
+        automaticPaymentSource:
+          payload.paymentMethod === "MANUAL" ? "NONE" : payload.paymentMethod,
         reminders: [
           {
-            message: 'Recurring invoice coming up',
+            message: "Recurring invoice coming up",
             relativeScheduledDays: -1,
           },
         ],
@@ -163,8 +176,8 @@ router.post('/create', async (req, res, next) => {
         orderId: order.id,
         primaryRecipient: { customerId: payload.customerId },
         title: `${service.name} ${payload.frequency.toLowerCase()} plan`,
-        description: payload.usageNotes || 'Recurring service',
-        deliveryMethod: 'EMAIL',
+        description: payload.usageNotes || "Recurring service",
+        deliveryMethod: "EMAIL",
         paymentRequests,
         acceptedPaymentMethods: {
           card: payload.allowCard,
@@ -174,7 +187,7 @@ router.post('/create', async (req, res, next) => {
         schedule: buildSchedule(payload.frequency, payload.startDate),
         customFields: [
           {
-            label: 'Subscription Frequency',
+            label: "Subscription Frequency",
             value: payload.frequency,
           },
         ],
@@ -203,7 +216,9 @@ router.post('/create', async (req, res, next) => {
       allowGiftCard: payload.allowGiftCard,
     });
 
-    res.redirect(`view/${payload.locationId}/${payload.customerId}/${invoice.id}`);
+    res.redirect(
+      `view/${payload.locationId}/${payload.customerId}/${invoice.id}`,
+    );
   } catch (error) {
     next(error);
   }

@@ -69,24 +69,42 @@
   margin: var(--space-sm) 0;
   height: 40px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(90deg, rgba(0,213,75,0.4) 10%, rgba(0,122,255,0.4) 30%, rgba(0,213,75,0.6) 60%, rgba(0,122,255,0.3) 90%);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 213, 75, 0.4) 10%,
+    rgba(0, 122, 255, 0.4) 30%,
+    rgba(0, 213, 75, 0.6) 60%,
+    rgba(0, 122, 255, 0.3) 90%
+  );
   position: relative;
   overflow: hidden;
 }
 
 .sparkline::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-size: 16px 100%;
-  background-image: linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px);
+  background-image: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.08) 1px,
+    transparent 1px
+  );
   opacity: 0.4;
 }
 
 .sparkline--reminders {
-  background: linear-gradient(90deg, rgba(0,213,75,0.6), rgba(0,213,75,0.2));
+  background: linear-gradient(
+    90deg,
+    rgba(0, 213, 75, 0.6),
+    rgba(0, 213, 75, 0.2)
+  );
 }
 
 .sparkline--backlog {
-  background: linear-gradient(90deg, rgba(255,59,48,0.6), rgba(255,204,0,0.3));
+  background: linear-gradient(
+    90deg,
+    rgba(255, 59, 48, 0.6),
+    rgba(255, 204, 0, 0.3)
+  );
 }

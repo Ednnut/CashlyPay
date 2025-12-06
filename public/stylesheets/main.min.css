@@ -1,4 +1,3 @@
-
 @import url(https://square-fonts-production-f.squarecdn.com/square-sans.min.css);
 @import url(https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap);
 @import url(https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap);
@@ -64,8 +63,9 @@ Licensed under the Apache License, Version 2.0
 
   /* Font Variables */
   --font-sans:
-    'Square Sans Text', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'SF Mono', 'Roboto Mono', monospace;
+    "Square Sans Text", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "Roboto Mono", monospace;
 }
 /* Dark Theme Variables */
 .dark {
@@ -96,7 +96,11 @@ Licensed under the Apache License, Version 2.0
     var(--theme-surface-raised) 0%,
     var(--theme-surface) 100%
   );
-  --gradient-glow: radial-gradient(circle at center, rgba(0, 213, 75, 0.1) 0%, transparent 70%);
+  --gradient-glow: radial-gradient(
+    circle at center,
+    rgba(0, 213, 75, 0.1) 0%,
+    transparent 70%
+  );
 
   /* Shadows */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -143,8 +147,8 @@ body {
   background: var(--theme-background);
   color: var(--text-primary);
   font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
-    'Helvetica Neue', sans-serif;
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+    Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
@@ -190,7 +194,9 @@ a:hover {
   box-shadow: none;
 }
 /* Backdrop Filter Support */
-@supports ((-webkit-backdrop-filter: blur(10px)) or (backdrop-filter: blur(10px))) {
+@supports (
+  (-webkit-backdrop-filter: blur(10px)) or (backdrop-filter: blur(10px))
+) {
   .glass {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -262,8 +268,8 @@ body {
   background-color: var(--theme-background);
   color: var(--text-primary);
   font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
-    'Helvetica Neue', sans-serif;
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+    Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
@@ -426,15 +432,15 @@ a:hover {
 @media (max-width: 640px) {
   button,
   .button,
-  input[type='submit'],
-  input[type='button'] {
+  input[type="submit"],
+  input[type="button"] {
     min-height: 44px;
     padding: var(--space-sm) var(--space-lg);
   }
 
-  input[type='text'],
-  input[type='email'],
-  input[type='password'],
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
   select,
   .select-filter {
     min-height: 44px;
@@ -473,7 +479,7 @@ a:hover {
 }
 /* Action Button Styles */
 .action-button::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -526,16 +532,20 @@ a:hover {
 .button,
 .action-button {
   -webkit-user-select: none;
-          user-select: none;
+  user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   will-change: transform;
 }
 .button-primary::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0)
+  );
   opacity: 0;
   transition: opacity 200ms ease;
 }
@@ -565,10 +575,14 @@ a:hover {
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 .button-secondary::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0)
+  );
   opacity: 0;
   transition: opacity 200ms ease;
 }
@@ -638,7 +652,7 @@ a:hover {
   pointer-events: none;
 }
 .button-loading::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 50%;
   top: 50%;
@@ -729,7 +743,7 @@ a:hover {
   background-color: var(--cash-white);
   cursor: pointer;
   -webkit-appearance: none;
-          appearance: none;
+  appearance: none;
   padding-right: var(--space-xl);
   background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%232D2D2D' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -743,19 +757,19 @@ a:hover {
   gap: var(--space-sm);
   cursor: pointer;
 }
-.form-checkbox input[type='checkbox'],
-.form-radio input[type='radio'] {
+.form-checkbox input[type="checkbox"],
+.form-radio input[type="radio"] {
   width: 20px;
   height: 20px;
   border: 2px solid var(--cash-gray-300);
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast) var(--transition-ease);
 }
-.form-checkbox input[type='checkbox']:checked {
+.form-checkbox input[type="checkbox"]:checked {
   background-color: var(--cash-green);
   border-color: var(--cash-green);
 }
-.form-radio input[type='radio'] {
+.form-radio input[type="radio"] {
   border-radius: 50%;
 }
 /* Form Validation */
@@ -778,7 +792,7 @@ a:hover {
   position: relative;
 }
 .form-money::before {
-  content: '$';
+  content: "$";
   position: absolute;
   left: var(--space-md);
   top: 50%;
@@ -926,7 +940,7 @@ a:hover {
   margin-top: var(--space-xs);
 }
 .invoice-card__amount {
-  font-family: 'SF Mono', 'Roboto Mono', monospace;
+  font-family: "SF Mono", "Roboto Mono", monospace;
   font-size: 20px;
   font-weight: 600;
   color: var(--color-brand);
@@ -1076,7 +1090,7 @@ a:hover {
 }
 /* Table Cell Types */
 .data-table__cell-money {
-  font-family: 'SF Mono', 'Roboto Mono', monospace;
+  font-family: "SF Mono", "Roboto Mono", monospace;
   font-weight: 500;
   color: var(--color-brand);
 }
@@ -1146,7 +1160,7 @@ a:hover {
   position: relative;
 }
 .data-table--loading tbody::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-color: var(--theme-surface-raised);
@@ -1222,7 +1236,7 @@ a:hover {
   margin-bottom: var(--space-xs);
 }
 .chart-tooltip__value {
-  font-family: 'SF Mono', 'Roboto Mono', monospace;
+  font-family: "SF Mono", "Roboto Mono", monospace;
   font-size: 16px;
   font-weight: 500;
   color: var(--color-brand);
@@ -1320,7 +1334,7 @@ a:hover {
   gap: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.05);
   -webkit-backdrop-filter: blur(10px);
-          backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 /* Main Content Area */
 .main-content {
@@ -1365,9 +1379,9 @@ a:hover {
 .grid-areas {
   display: grid;
   grid-template-areas:
-    'header header header'
-    'sidebar main main'
-    'footer footer footer';
+    "header header header"
+    "sidebar main main"
+    "footer footer footer";
   gap: 1.5rem;
 }
 /* Responsive Breakpoints */
@@ -1380,10 +1394,10 @@ a:hover {
 
   .grid-areas {
     grid-template-areas:
-      'header'
-      'sidebar'
-      'main'
-      'footer';
+      "header"
+      "sidebar"
+      "main"
+      "footer";
   }
 }
 /* Navigation Styles */
@@ -1527,7 +1541,7 @@ a:hover {
   overflow: hidden;
 }
 .stat-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -1820,7 +1834,7 @@ tfoot tr {
   right: 0;
   background: var(--theme-surface-overlay);
   -webkit-backdrop-filter: blur(8px);
-          backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border-top: 1px solid var(--theme-border);
   padding: var(--space-md) 0;
   z-index: 100;
@@ -2453,7 +2467,7 @@ tfoot tr {
   padding: var(--space-md);
   background: var(--theme-surface-overlay);
   -webkit-backdrop-filter: blur(8px);
-          backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border-radius: var(--radius-lg);
   border: 1px solid var(--theme-border);
   display: flex;

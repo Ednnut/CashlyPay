@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const express = require('express');
-const crypto = require('crypto');
-const activityStore = require('../util/activity-store');
-const reminderQueue = require('../util/reminder-queue');
+const express = require("express");
+const crypto = require("crypto");
+const activityStore = require("../util/activity-store");
+const reminderQueue = require("../util/reminder-queue");
 
 const router = express.Router();
 
@@ -27,29 +27,32 @@ const verifySignature = (req) => {
     return true;
   }
 
-  const signatureHeader = req.get('x-square-hmacsha256-signature');
+  const signatureHeader = req.get("x-square-hmacsha256-signature");
   if (!signatureHeader) {
     return false;
   }
 
   const body = JSON.stringify(req.body || {});
-  const hmac = crypto.createHmac('sha256', signatureKey);
+  const hmac = crypto.createHmac("sha256", signatureKey);
   hmac.update(body);
-  const expected = hmac.digest('base64');
+  const expected = hmac.digest("base64");
 
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signatureHeader));
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signatureHeader),
+  );
 };
 
-router.post('/square', (req, res) => {
+router.post("/square", (req, res) => {
   if (!verifySignature(req)) {
-    return res.status(401).json({ message: 'Invalid webhook signature' });
+    return res.status(401).json({ message: "Invalid webhook signature" });
   }
 
   const { type, data } = req.body || {};
   const invoice = data?.object?.invoice;
 
   if (!type) {
-    return res.status(400).json({ message: 'Missing event type' });
+    return res.status(400).json({ message: "Missing event type" });
   }
 
   activityStore.addEvent({

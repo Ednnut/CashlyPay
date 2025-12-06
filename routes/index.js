@@ -14,16 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const express = require('express');
-const managementRoute = require('./management');
-const invoiceRoute = require('./invoice');
-const estimateRoute = require('./estimate');
-const subscriptionRoute = require('./subscription');
-const customerRoute = require('./customer');
-const uploadRoute = require('./uploads');
-const adminRoute = require('./admin');
-const analyticsRoute = require('./analytics');
-const { customersApi, locationsApi } = require('../util/square-client');
+const express = require("express");
+const managementRoute = require("./management");
+const invoiceRoute = require("./invoice");
+const estimateRoute = require("./estimate");
+const subscriptionRoute = require("./subscription");
+const customerRoute = require("./customer");
+const uploadRoute = require("./uploads");
+const adminRoute = require("./admin");
+const analyticsRoute = require("./analytics");
+const { customersApi, locationsApi } = require("../util/square-client");
 
 const router = express.Router();
 
@@ -34,14 +34,14 @@ const router = express.Router();
  *  If the rquest url matches one of the router.use calls, then the routes used are in the
  *  required file.
  */
-router.use('/management', managementRoute);
-router.use('/invoice', invoiceRoute);
-router.use('/estimate', estimateRoute);
-router.use('/subscription', subscriptionRoute);
-router.use('/customers', customerRoute);
-router.use('/uploads', uploadRoute);
-router.use('/admin', adminRoute);
-router.use('/analytics', analyticsRoute);
+router.use("/management", managementRoute);
+router.use("/invoice", invoiceRoute);
+router.use("/estimate", estimateRoute);
+router.use("/subscription", subscriptionRoute);
+router.use("/customers", customerRoute);
+router.use("/uploads", uploadRoute);
+router.use("/admin", adminRoute);
+router.use("/analytics", analyticsRoute);
 
 /**
  * Matches: GET /
@@ -49,24 +49,31 @@ router.use('/analytics', analyticsRoute);
  * Description:
  *  Retrieves list of customers then render the homepage with a list of the customers that has an email.
  */
-router.get('/', async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
     // Retrieve the main location which is the very first location merchant has
     const {
       result: { location },
-    } = await locationsApi.retrieveLocation('main');
+    } = await locationsApi.retrieveLocation("main");
     // Retrieves customers for this current merchant
     let {
       result: { customers },
     } = await customersApi.listCustomers();
     customers = customers || [];
-    const customersWithEmail = customers.filter((customer) => customer.emailAddress);
-    const displayCustomers = customersWithEmail.length > 0 ? customersWithEmail : customers;
+    const customersWithEmail = customers.filter(
+      (customer) => customer.emailAddress,
+    );
+    const displayCustomers =
+      customersWithEmail.length > 0 ? customersWithEmail : customers;
 
     // Render the customer list homepage
-    res.render('index', {
+    const squareEnv = (process.env.SQUARE_ENVIRONMENT || process.env.NODE_ENV || "sandbox").toLowerCase();
+    const envStatus = squareEnv === "production" ? { label: "Live", tone: "live" } : { label: "Testing", tone: "testing" };
+
+    res.render("index", {
       customers: displayCustomers,
       locationId: location.id, // use the main location as the default
+      envStatus,
     });
   } catch (error) {
     next(error);

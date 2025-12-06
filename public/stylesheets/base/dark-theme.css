@@ -42,8 +42,16 @@ body {
   background: var(--dark-bg-primary);
   color: var(--text-primary);
   background-image:
-    radial-gradient(circle at 100% 0%, rgba(0, 213, 75, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 0% 100%, rgba(0, 213, 75, 0.05) 0%, transparent 40%);
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(0, 213, 75, 0.05) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 0% 100%,
+      rgba(0, 213, 75, 0.05) 0%,
+      transparent 40%
+    );
   min-height: 100vh;
 }
 
@@ -156,7 +164,7 @@ body {
 }
 
 .loading-indicator::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border: 2px solid rgba(255, 255, 255, 0.1);

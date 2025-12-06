@@ -16,15 +16,15 @@ limitations under the License.
 
 /* eslint no-console: 0 */
 
-const { Client } = require('square');
-const readline = require('readline');
-const crypto = require('crypto');
-const { program } = require('commander');
-require('dotenv').config();
+const { Client } = require("square");
+const readline = require("readline");
+const crypto = require("crypto");
+const { program } = require("commander");
+require("dotenv").config();
 
 // We don't recommend to run this script in production environment
 const config = {
-  environment: 'sandbox',
+  environment: "sandbox",
   accessToken: process.env.SQUARE_ACCESS_TOKEN,
 };
 
@@ -43,14 +43,14 @@ async function addCustomers() {
       result: { customer },
     } = await customersApi.createCustomer({
       idempotencyKey: crypto.randomUUID(),
-      givenName: 'Ryan',
-      familyName: 'Nakamura',
-      emailAddress: 'nakamura710@square-example.com', // it is a fake email
+      givenName: "Ryan",
+      familyName: "Nakamura",
+      emailAddress: "nakamura710@square-example.com", // it is a fake email
     });
 
     await cardsApi.createCard({
       idempotencyKey: crypto.randomUUID(),
-      sourceId: 'cnon:card-nonce-ok',
+      sourceId: "cnon:card-nonce-ok",
       card: {
         customerId: customer.id,
       },
@@ -59,14 +59,14 @@ async function addCustomers() {
     // create second customer with no card on file
     await customersApi.createCustomer({
       idempotencyKey: crypto.randomUUID(),
-      givenName: 'Kaitlyn',
-      familyName: 'Spindel',
-      emailAddress: 'kaitlyn@square-example.com', // it is a fake email
+      givenName: "Kaitlyn",
+      familyName: "Spindel",
+      emailAddress: "kaitlyn@square-example.com", // it is a fake email
     });
 
-    console.log('Successfully created customers');
+    console.log("Successfully created customers");
   } catch (error) {
-    console.error('Create customers failed: ', error);
+    console.error("Create customers failed: ", error);
   }
 }
 
@@ -84,12 +84,12 @@ async function clearCustomers() {
         const customer = customers[key];
         await customersApi.deleteCustomer(customer.id);
       }
-      console.log('Successfully deleted customers');
+      console.log("Successfully deleted customers");
     } else {
-      console.log('No customers to delete');
+      console.log("No customers to delete");
     }
   } catch (error) {
-    console.error('Error in deleting customers:', error);
+    console.error("Error in deleting customers:", error);
   }
 }
 
@@ -97,26 +97,29 @@ async function clearCustomers() {
  * Main driver for the script.
  */
 program
-  .command('clear')
-  .description('clear all customers in your sandbox.')
+  .command("clear")
+  .description("clear all customers in your sandbox.")
   .action(() => {
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
     });
-    rl.question('Are you sure you want to clear all customers in your sandbox? (y/N) ', (ans) => {
-      if (ans.toUpperCase() === 'Y') {
-        clearCustomers();
-      } else if (ans.toUpperCase() === 'N') {
-        console.log('Aborting clear.');
-      }
-      rl.close();
-    });
+    rl.question(
+      "Are you sure you want to clear all customers in your sandbox? (y/N) ",
+      (ans) => {
+        if (ans.toUpperCase() === "Y") {
+          clearCustomers();
+        } else if (ans.toUpperCase() === "N") {
+          console.log("Aborting clear.");
+        }
+        rl.close();
+      },
+    );
   });
 
 program
-  .command('generate')
-  .description('create two customers, one with card on file and one without.')
+  .command("generate")
+  .description("create two customers, one with card on file and one without.")
   .action(() => {
     addCustomers();
   });

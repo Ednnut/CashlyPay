@@ -1,16 +1,20 @@
-const express = require('express');
-const { listReminders, runNow } = require('../util/reminder-queue');
+const express = require("express");
+const { listReminders, runNow } = require("../util/reminder-queue");
 
 const router = express.Router();
 
-router.get('/reminders', (req, res) => {
-  const reminders = listReminders();
-  res.render('admin-reminders', { reminders });
+router.get("/", (req, res) => {
+  res.redirect("/admin/reminders");
 });
 
-router.post('/reminders/run', (req, res) => {
+router.get("/reminders", (req, res) => {
+  const reminders = listReminders();
+  res.render("admin-reminders", { reminders });
+});
+
+router.post("/reminders/run", (req, res) => {
   runNow();
-  res.redirect('/admin/reminders');
+  res.redirect("/admin/reminders");
 });
 
 module.exports = router;

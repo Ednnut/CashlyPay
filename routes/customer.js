@@ -14,32 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const express = require('express');
-const Joi = require('joi');
-const { customersApi } = require('../util/square-client');
+const express = require("express");
+const Joi = require("joi");
+const { customersApi } = require("../util/square-client");
 
 const router = express.Router();
 
 const customerSchema = Joi.object({
   givenName: Joi.string().trim().max(100).required(),
-  familyName: Joi.string().trim().max(100).allow(''),
-  emailAddress: Joi.string().trim().email().allow(''),
-  phoneNumber: Joi.string().trim().max(20).allow(''),
-  companyName: Joi.string().trim().max(120).allow(''),
-  note: Joi.string().trim().max(500).allow(''),
-  addressLine1: Joi.string().trim().max(200).allow(''),
-  addressLine2: Joi.string().trim().max(200).allow(''),
-  locality: Joi.string().trim().max(120).allow(''),
-  administrativeDistrictLevel1: Joi.string().trim().max(100).allow(''),
-  postalCode: Joi.string().trim().max(30).allow(''),
-  country: Joi.string().trim().uppercase().length(2).default('US'),
+  familyName: Joi.string().trim().max(100).allow(""),
+  emailAddress: Joi.string().trim().email().allow(""),
+  phoneNumber: Joi.string().trim().max(20).allow(""),
+  companyName: Joi.string().trim().max(120).allow(""),
+  note: Joi.string().trim().max(500).allow(""),
+  addressLine1: Joi.string().trim().max(200).allow(""),
+  addressLine2: Joi.string().trim().max(200).allow(""),
+  locality: Joi.string().trim().max(120).allow(""),
+  administrativeDistrictLevel1: Joi.string().trim().max(100).allow(""),
+  postalCode: Joi.string().trim().max(30).allow(""),
+  country: Joi.string().trim().uppercase().length(2).default("US"),
 });
 
-router.get('/new', (req, res) => {
-  res.render('customer-new');
+router.get("/new", (req, res) => {
+  res.render("customer-new");
 });
 
-router.post('/', async (req, res, next) => {
+router.post("/", async (req, res, next) => {
   let payload;
   try {
     payload = await customerSchema.validateAsync(req.body, {
@@ -69,7 +69,8 @@ router.post('/', async (req, res, next) => {
               addressLine1: payload.addressLine1 || undefined,
               addressLine2: payload.addressLine2 || undefined,
               locality: payload.locality || undefined,
-              administrativeDistrictLevel1: payload.administrativeDistrictLevel1 || undefined,
+              administrativeDistrictLevel1:
+                payload.administrativeDistrictLevel1 || undefined,
               postalCode: payload.postalCode || undefined,
               country: payload.country,
             }

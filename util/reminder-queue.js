@@ -1,19 +1,19 @@
-const fs = require('fs');
-const path = require('path');
-const activityStore = require('./activity-store');
+const fs = require("fs");
+const path = require("path");
+const activityStore = require("./activity-store");
 
-const DATA_FILE = path.join(__dirname, '../data/reminders.json');
+const DATA_FILE = path.join(__dirname, "../data/reminders.json");
 const PROCESS_INTERVAL_MS = 60 * 1000;
 
 const ensureFile = () => {
   if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify([]), 'utf-8');
+    fs.writeFileSync(DATA_FILE, JSON.stringify([]), "utf-8");
   }
 };
 
 const readReminders = () => {
   ensureFile();
-  const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+  const raw = fs.readFileSync(DATA_FILE, "utf-8");
   try {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
@@ -45,25 +45,36 @@ const scheduleReminder = (reminder) => {
   };
 
   const existingIndex = reminders.findIndex(
-    (item) => item.invoiceId === newReminder.invoiceId && item.type === newReminder.type
+    (item) =>
+      item.invoiceId === newReminder.invoiceId &&
+      item.type === newReminder.type,
   );
 
   if (existingIndex >= 0) {
     reminders[existingIndex] = newReminder;
-    log(`Updated reminder ${newReminder.type} for invoice ${newReminder.invoiceId}`);
+    log(
+      `Updated reminder ${newReminder.type} for invoice ${newReminder.invoiceId}`,
+    );
   } else {
     reminders.push(newReminder);
-    log(`Scheduled reminder ${newReminder.type} for invoice ${newReminder.invoiceId}`);
+    log(
+      `Scheduled reminder ${newReminder.type} for invoice ${newReminder.invoiceId}`,
+    );
   }
 
   writeReminders(reminders);
 };
 
 const scheduleFromInvoice = (invoice) => {
-  if (!Array.isArray(invoice.paymentRequests) || !invoice.paymentRequests.length) return;
+  if (
+    !Array.isArray(invoice.paymentRequests) ||
+    !invoice.paymentRequests.length
+  )
+    return;
   const paymentRequest =
-    invoice.paymentRequests.find((request) => request.requestType === 'BALANCE') ||
-    invoice.paymentRequests[0];
+    invoice.paymentRequests.find(
+      (request) => request.requestType === "BALANCE",
+    ) || invoice.paymentRequests[0];
 
   if (!paymentRequest || !paymentRequest.dueDate) return;
 
@@ -75,7 +86,7 @@ const scheduleFromInvoice = (invoice) => {
     invoiceId: invoice.id,
     customerId: invoice.primaryRecipient?.customerId,
     locationId: invoice.locationId,
-    type: 'UPCOMING_DUE',
+    type: "UPCOMING_DUE",
     runAt: reminderDate.toISOString(),
     message: `Invoice ${invoice.invoiceNumber || invoice.id} is due soon.`,
   });
@@ -86,7 +97,7 @@ const scheduleFromInvoice = (invoice) => {
     invoiceId: invoice.id,
     customerId: invoice.primaryRecipient?.customerId,
     locationId: invoice.locationId,
-    type: 'OVERDUE_CHECK',
+    type: "OVERDUE_CHECK",
     runAt: overdueDate.toISOString(),
     message: `Invoice ${invoice.invoiceNumber || invoice.id} is overdue.`,
   });
@@ -100,10 +111,12 @@ const processReminders = () => {
 
     reminders.forEach((reminder) => {
       if (new Date(reminder.runAt).getTime() <= now) {
-        log(`Sending ${reminder.type} reminder for invoice ${reminder.invoiceId}`);
+        log(
+          `Sending ${reminder.type} reminder for invoice ${reminder.invoiceId}`,
+        );
         activityStore.addEvent({
           invoiceId: reminder.invoiceId,
-          type: 'REMINDER_SENT',
+          type: "REMINDER_SENT",
           payload: reminder,
         });
       } else {
@@ -116,7 +129,7 @@ const processReminders = () => {
     }
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('[ReminderQueue] Failed to process reminders', error);
+    console.error("[ReminderQueue] Failed to process reminders", error);
   }
 };
 

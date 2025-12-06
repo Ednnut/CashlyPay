@@ -36,7 +36,7 @@
 }
 
 .invoice-card__amount {
-  font-family: 'SF Mono', 'Roboto Mono', monospace;
+  font-family: "SF Mono", "Roboto Mono", monospace;
   font-size: 20px;
   font-weight: 600;
   color: var(--color-brand);

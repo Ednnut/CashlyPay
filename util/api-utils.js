@@ -1,7 +1,7 @@
 // API Utilities
 
 class APIResponse {
-  static success(data, message = 'Success') {
+  static success(data, message = "Success") {
     return {
       success: true,
       message,
@@ -26,7 +26,7 @@ class APIError extends Error {
     super(message);
     this.statusCode = statusCode;
     this.errors = errors;
-    this.name = 'APIError';
+    this.name = "APIError";
   }
 }
 
@@ -39,9 +39,9 @@ const validateRequest = (schema) => {
     const { error } = schema.validate(req.body);
     if (error) {
       throw new APIError(
-        'Validation Error',
+        "Validation Error",
         400,
-        error.details.map((detail) => detail.message)
+        error.details.map((detail) => detail.message),
       );
     }
     next();
@@ -61,19 +61,19 @@ const errorHandler = (err, req, res, next) => {
   if (err.statusCode && err.errors) {
     return res.status(err.statusCode).json(
       APIResponse.error(
-        'Square API Error',
+        "Square API Error",
         err.statusCode,
-        err.errors.map((e) => e.detail)
-      )
+        err.errors.map((e) => e.detail),
+      ),
     );
   }
 
   // Default error response
-  res.status(500).json(APIResponse.error('Internal Server Error', 500));
+  res.status(500).json(APIResponse.error("Internal Server Error", 500));
 };
 
 const notFoundHandler = (req, res) => {
-  res.status(404).json(APIResponse.error('Resource not found', 404));
+  res.status(404).json(APIResponse.error("Resource not found", 404));
 };
 
 module.exports = {

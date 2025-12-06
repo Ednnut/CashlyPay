@@ -123,15 +123,15 @@
 @media (max-width: 640px) {
   button,
   .button,
-  input[type='submit'],
-  input[type='button'] {
+  input[type="submit"],
+  input[type="button"] {
     min-height: 44px;
     padding: var(--space-sm) var(--space-lg);
   }
 
-  input[type='text'],
-  input[type='email'],
-  input[type='password'],
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
   select,
   .select-filter {
     min-height: 44px;

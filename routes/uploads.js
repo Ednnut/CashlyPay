@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const express = require('express');
-const multer = require('multer');
-const storage = require('../util/storage');
+const express = require("express");
+const multer = require("multer");
+const storage = require("../util/storage");
 
 const router = express.Router();
 
@@ -27,9 +27,9 @@ const upload = multer({
   },
 });
 
-router.post('/', upload.single('file'), (req, res) => {
+router.post("/", upload.single("file"), (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
+    return res.status(400).json({ message: "No file uploaded" });
   }
 
   const saved = storage.saveFile(req.file);

@@ -14,17 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const express = require('express');
-const crypto = require('crypto');
-const Joi = require('joi');
-const { cardsApi, ordersApi, invoicesApi, locationsApi } = require('../util/square-client');
-const estimateStore = require('../util/estimate-store');
-const reminderQueue = require('../util/reminder-queue');
-const activityStore = require('../util/activity-store');
+const express = require("express");
+const crypto = require("crypto");
+const Joi = require("joi");
+const {
+  cardsApi,
+  ordersApi,
+  invoicesApi,
+  locationsApi,
+} = require("../util/square-client");
+const estimateStore = require("../util/estimate-store");
+const reminderQueue = require("../util/reminder-queue");
+const activityStore = require("../util/activity-store");
 
 const router = express.Router();
 
-const MERCHANT_SUBSCRIPTION_NOT_FOUND_CODE = 'MERCHANT_SUBSCRIPTION_NOT_FOUND';
+const MERCHANT_SUBSCRIPTION_NOT_FOUND_CODE = "MERCHANT_SUBSCRIPTION_NOT_FOUND";
 
 const createInvoiceSchema = Joi.object({
   customerId: Joi.string().trim().required(),
@@ -33,12 +38,21 @@ const createInvoiceSchema = Joi.object({
   priceAmount: Joi.number().integer().positive().required(),
   name: Joi.string().trim().max(255).required(),
   currency: Joi.string().trim().uppercase().length(3).optional(),
-  allowCard: Joi.boolean().truthy('true', '1', 'on').falsy('false', '0', 'off').default(true),
-  allowBank: Joi.boolean().truthy('true', '1', 'on').falsy('false', '0', 'off').default(false),
-  allowGiftCard: Joi.boolean().truthy('true', '1', 'on').falsy('false', '0', 'off').default(true),
+  allowCard: Joi.boolean()
+    .truthy("true", "1", "on")
+    .falsy("false", "0", "off")
+    .default(true),
+  allowBank: Joi.boolean()
+    .truthy("true", "1", "on")
+    .falsy("false", "0", "off")
+    .default(false),
+  allowGiftCard: Joi.boolean()
+    .truthy("true", "1", "on")
+    .falsy("false", "0", "off")
+    .default(true),
   paymentSource: Joi.string()
-    .valid('AUTO', 'CARD_ON_FILE', 'BANK_ON_FILE', 'NONE')
-    .default('AUTO'),
+    .valid("AUTO", "CARD_ON_FILE", "BANK_ON_FILE", "NONE")
+    .default("AUTO"),
 });
 
 const publishInvoiceSchema = Joi.object({
@@ -70,7 +84,7 @@ const validateRequest = (schema, payload) => {
   });
 
   if (error) {
-    const validationError = new Error('Invalid request payload');
+    const validationError = new Error("Invalid request payload");
     validationError.status = 400;
     validationError.errors = error.details.map((detail) => detail.message);
     throw validationError;
@@ -88,30 +102,32 @@ const buildPaymentRequestsFromEstimate = (estimate, currency) => {
   balanceDue.setDate(now.getDate() + 10);
 
   const automaticSource =
-    estimate.paymentSource && estimate.paymentSource !== 'AUTO' ? estimate.paymentSource : 'NONE';
+    estimate.paymentSource && estimate.paymentSource !== "AUTO"
+      ? estimate.paymentSource
+      : "NONE";
 
   if (estimate.depositPercentage > 0 && estimate.depositAmount > 0) {
     const depositRequest = {
-      requestType: 'DEPOSIT',
-      dueDate: depositDue.toISOString().split('T')[0],
+      requestType: "DEPOSIT",
+      dueDate: depositDue.toISOString().split("T")[0],
       amountMoney: {
         amount: estimate.depositAmount,
         currency,
       },
     };
-    if (automaticSource !== 'NONE') {
+    if (automaticSource !== "NONE") {
       depositRequest.automaticPaymentSource = automaticSource;
     }
     paymentRequests.push(depositRequest);
   }
 
   paymentRequests.push({
-    requestType: 'BALANCE',
-    dueDate: balanceDue.toISOString().split('T')[0],
+    requestType: "BALANCE",
+    dueDate: balanceDue.toISOString().split("T")[0],
     automaticPaymentSource: automaticSource,
     reminders: [
       {
-        message: 'Payment due soon',
+        message: "Payment due soon",
         relativeScheduledDays: -2,
       },
     ],
@@ -124,9 +140,9 @@ const addPricingDetailsToOrder = (order, estimate) => {
   if (estimate.discountPercent) {
     order.discounts = [
       {
-        name: 'Estimate Discount',
+        name: "Estimate Discount",
         percentage: estimate.discountPercent.toFixed(2),
-        scope: 'ORDER',
+        scope: "ORDER",
       },
     ];
   }
@@ -134,9 +150,9 @@ const addPricingDetailsToOrder = (order, estimate) => {
   if (estimate.taxPercent) {
     order.taxes = [
       {
-        name: 'Tax',
+        name: "Tax",
         percentage: estimate.taxPercent.toFixed(2),
-        scope: 'ORDER',
+        scope: "ORDER",
       },
     ];
   }
@@ -144,7 +160,7 @@ const addPricingDetailsToOrder = (order, estimate) => {
   if (estimate.surchargeAmount) {
     order.serviceCharges = [
       {
-        name: 'Surcharge',
+        name: "Surcharge",
         amountMoney: {
           amount: estimate.surchargeAmount,
           currency: estimate.currency,
@@ -157,29 +173,31 @@ const addPricingDetailsToOrder = (order, estimate) => {
 const buildCustomFieldsFromEstimate = (estimate) => {
   const customFields = [
     {
-      label: 'Estimate ID',
+      label: "Estimate ID",
       value: estimate.id,
     },
   ];
 
   if (estimate.poNumber) {
     customFields.push({
-      label: 'PO Number',
+      label: "PO Number",
       value: estimate.poNumber,
     });
   }
 
   if (estimate.customNotes) {
     customFields.push({
-      label: 'Customer Notes',
+      label: "Customer Notes",
       value: estimate.customNotes,
     });
   }
 
   if (estimate.attachments && estimate.attachments.length) {
     customFields.push({
-      label: 'Attachments',
-      value: estimate.attachments.map((attachment) => `${attachment.name}: ${attachment.url}`).join(' | '),
+      label: "Attachments",
+      value: estimate.attachments
+        .map((attachment) => `${attachment.name}: ${attachment.url}`)
+        .join(" | "),
     });
   }
 
@@ -198,67 +216,81 @@ const buildCustomFieldsFromEstimate = (estimate) => {
  *  customerId: Id of the selected customer
  *  invoiceId: Id of the selected invoice
  */
-router.get('/view/:locationId/:customerId/:invoiceId', async (req, res, next) => {
-  const { locationId, customerId, invoiceId } = req.params;
-  try {
-    // Get the invoice by invoice id
-    const {
-      result: { invoice },
-    } = await invoicesApi.getInvoice(invoiceId);
+router.get(
+  "/view/:locationId/:customerId/:invoiceId",
+  async (req, res, next) => {
+    const { locationId, customerId, invoiceId } = req.params;
+    try {
+      // Get the invoice by invoice id
+      const {
+        result: { invoice },
+      } = await invoicesApi.getInvoice(invoiceId);
 
-    // Helper function to format dates
-    const formatDate = (dateString) => {
-      if (!dateString) return 'Not specified';
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-      }).format(date);
-    };
+      // Helper function to format dates
+      const formatDate = (dateString) => {
+        if (!dateString) return "Not specified";
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+        }).format(date);
+      };
 
-    const paymentRequest = Array.isArray(invoice.paymentRequests) && invoice.paymentRequests.length
-      ? invoice.paymentRequests.find((request) => request.requestType === 'BALANCE') || invoice.paymentRequests[0]
-      : null;
+      const paymentRequest =
+        Array.isArray(invoice.paymentRequests) && invoice.paymentRequests.length
+          ? invoice.paymentRequests.find(
+              (request) => request.requestType === "BALANCE",
+            ) || invoice.paymentRequests[0]
+          : null;
 
-    const paymentAmountRaw =
-      paymentRequest?.computedAmountMoney?.amount ??
-      paymentRequest?.total?.amount ??
-      paymentRequest?.amountMoney?.amount ??
-      0;
-    const paymentAmount = Number(paymentAmountRaw) || 0;
+      const paymentAmountRaw =
+        paymentRequest?.computedAmountMoney?.amount ??
+        paymentRequest?.total?.amount ??
+        paymentRequest?.amountMoney?.amount ??
+        0;
+      const paymentAmount = Number(paymentAmountRaw) || 0;
 
-    const paymentDueDate = paymentRequest?.dueDate || invoice.dueDate || invoice.scheduledAt || null;
-    const paymentMethod = paymentRequest?.automaticPaymentSource || 'NONE';
+      const paymentDueDate =
+        paymentRequest?.dueDate ||
+        invoice.dueDate ||
+        invoice.scheduledAt ||
+        null;
+      const paymentMethod = paymentRequest?.automaticPaymentSource || "NONE";
 
-    const recipient = invoice.primaryRecipient || {};
-    const recipientName = [recipient.givenName, recipient.familyName].filter(Boolean).join(' ').trim()
-      || recipient.companyName
-      || 'Customer';
-    const recipientEmail = recipient.emailAddress || null;
+      const recipient = invoice.primaryRecipient || {};
+      const recipientName =
+        [recipient.givenName, recipient.familyName]
+          .filter(Boolean)
+          .join(" ")
+          .trim() ||
+        recipient.companyName ||
+        "Customer";
+      const recipientEmail = recipient.emailAddress || null;
 
-    // Render the invoice detail view page
-    const activities = activityStore.listByInvoice(invoiceId);
+      // Render the invoice detail view page
+      const activities = activityStore.listByInvoice(invoiceId);
 
-    res.render('invoice', {
-      locationId,
-      customerId,
-      invoice,
-      paymentAmount,
-      paymentDueDate,
-      paymentMethod,
-      recipientName,
-      recipientEmail,
-      formatDate,
-      idempotencyKey: crypto.randomUUID(),
-      activities,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+      res.render("invoice", {
+        locationId,
+        customerId,
+        invoice,
+        paymentAmount,
+        paymentDueDate,
+        paymentMethod,
+        recipientName,
+        recipientEmail,
+        formatDate,
+        idempotencyKey: crypto.randomUUID(),
+        activities,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 /**
  * Matches: POST /invoice/create
@@ -280,13 +312,18 @@ router.get('/view/:locationId/:customerId/:invoiceId', async (req, res, next) =>
  *  priceAmount: The amount of price for the order item
  *  name: The name of the order item
  */
-router.post('/create', async (req, res, next) => {
+router.post("/create", async (req, res, next) => {
   let payload;
   try {
-    const booleanFields = ['allowCard', 'allowBank', 'allowGiftCard'];
+    const booleanFields = ["allowCard", "allowBank", "allowGiftCard"];
     const normalizedBody = { ...req.body };
     booleanFields.forEach((field) => {
-      normalizedBody[field] = Object.prototype.hasOwnProperty.call(req.body, field) ? 'true' : 'false';
+      normalizedBody[field] = Object.prototype.hasOwnProperty.call(
+        req.body,
+        field,
+      )
+        ? "true"
+        : "false";
     });
     payload = validateRequest(createInvoiceSchema, normalizedBody);
   } catch (validationError) {
@@ -314,7 +351,8 @@ router.post('/create', async (req, res, next) => {
 
     // Step 2: Fetch location currency
     const locationResponse = await locationsApi.retrieveLocation(locationId);
-    const currency = requestedCurrency || locationResponse.result.location.currency;
+    const currency =
+      requestedCurrency || locationResponse.result.location.currency;
 
     // Step 3: Create an order to be attached to the invoice
     const orderRequest = {
@@ -324,7 +362,7 @@ router.post('/create', async (req, res, next) => {
         lineItems: [
           {
             name,
-            quantity: '1',
+            quantity: "1",
             basePriceMoney: {
               amount: priceAmount,
               currency,
@@ -351,7 +389,7 @@ router.post('/create', async (req, res, next) => {
     // Step 4: Set the due date to 7 days from today
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 7);
-    const dueDateString = dueDate.toISOString().split('T')[0];
+    const dueDateString = dueDate.toISOString().split("T")[0];
 
     // Step 5: Set the scheduledAt to next 10 minutes
     const scheduledAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -359,27 +397,27 @@ router.post('/create', async (req, res, next) => {
 
     // Step 6: Set the payment request based on the customer's card on file status
     let paymentRequest = null;
-    if (paymentSource === 'CARD_ON_FILE') {
+    if (paymentSource === "CARD_ON_FILE") {
       paymentRequest = {
-        requestType: 'BALANCE',
-        automaticPaymentSource: 'CARD_ON_FILE',
+        requestType: "BALANCE",
+        automaticPaymentSource: "CARD_ON_FILE",
         dueDate: dueDateString,
         cardId: cards?.[0]?.id,
       };
-    } else if (paymentSource === 'BANK_ON_FILE') {
+    } else if (paymentSource === "BANK_ON_FILE") {
       paymentRequest = {
-        requestType: 'BALANCE',
-        automaticPaymentSource: 'BANK_ON_FILE',
+        requestType: "BALANCE",
+        automaticPaymentSource: "BANK_ON_FILE",
         dueDate: dueDateString,
       };
-    } else if (paymentSource === 'NONE') {
+    } else if (paymentSource === "NONE") {
       paymentRequest = {
-        requestType: 'BALANCE',
-        automaticPaymentSource: 'NONE',
+        requestType: "BALANCE",
+        automaticPaymentSource: "NONE",
         dueDate: dueDateString,
         reminders: [
           {
-            message: 'Your invoice is due tomorrow',
+            message: "Your invoice is due tomorrow",
             relativeScheduledDays: -1,
           },
         ],
@@ -389,8 +427,8 @@ router.post('/create', async (req, res, next) => {
       // creating invoice with the payment request method CARD_ON_FILE
       // the invoice will be charged with the card on file on the due date
       paymentRequest = {
-        requestType: 'BALANCE',
-        automaticPaymentSource: 'CARD_ON_FILE',
+        requestType: "BALANCE",
+        automaticPaymentSource: "CARD_ON_FILE",
         dueDate: dueDateString,
         cardId: cards[0].id, // Take the first card
       };
@@ -399,12 +437,12 @@ router.post('/create', async (req, res, next) => {
       // creating invoice with the payment request method EMAIL and set a reminder
       // the invoice will be sent and paid by customer
       paymentRequest = {
-        requestType: 'BALANCE',
-        automaticPaymentSource: 'NONE',
+        requestType: "BALANCE",
+        automaticPaymentSource: "NONE",
         dueDate: dueDateString,
         reminders: [
           {
-            message: 'Your invoice is due tomorrow',
+            message: "Your invoice is due tomorrow",
             relativeScheduledDays: -1,
           },
         ],
@@ -415,7 +453,7 @@ router.post('/create', async (req, res, next) => {
     const requestBody = {
       idempotencyKey,
       invoice: {
-        deliveryMethod: 'EMAIL',
+        deliveryMethod: "EMAIL",
         orderId: order.id,
         title: name,
         description: `Service: ${name}`,
@@ -453,9 +491,10 @@ router.post('/create', async (req, res, next) => {
          * */
         const cleanRequestBody = { ...requestBody };
         cleanRequestBody.invoice.customFields = [];
-        cleanRequestBody.invoice.paymentRequests[0].requestType = 'BALANCE';
+        cleanRequestBody.invoice.paymentRequests[0].requestType = "BALANCE";
 
-        const invoiceResponse = await invoicesApi.createInvoice(cleanRequestBody);
+        const invoiceResponse =
+          await invoicesApi.createInvoice(cleanRequestBody);
         invoice = invoiceResponse.result.invoice;
       } else {
         // If it's not a migration error, pass the error to the next middleware
@@ -469,7 +508,7 @@ router.post('/create', async (req, res, next) => {
   }
 });
 
-router.post('/convert-estimate', async (req, res, next) => {
+router.post("/convert-estimate", async (req, res, next) => {
   let payload;
   try {
     payload = validateRequest(convertEstimateSchema, req.body);
@@ -480,13 +519,15 @@ router.post('/convert-estimate', async (req, res, next) => {
   try {
     const estimate = estimateStore.getEstimate(payload.estimateId);
     if (!estimate) {
-      const err = new Error('Estimate not found');
+      const err = new Error("Estimate not found");
       err.status = 404;
       throw err;
     }
 
-    if (estimate.status === 'converted' && estimate.invoiceId) {
-      return res.redirect(`view/${payload.locationId}/${payload.customerId}/${estimate.invoiceId}`);
+    if (estimate.status === "converted" && estimate.invoiceId) {
+      return res.redirect(
+        `view/${payload.locationId}/${payload.customerId}/${estimate.invoiceId}`,
+      );
     }
 
     const orderRequest = {
@@ -496,7 +537,7 @@ router.post('/convert-estimate', async (req, res, next) => {
         lineItems: [
           {
             name: estimate.serviceName,
-            quantity: '1',
+            quantity: "1",
             basePriceMoney: {
               amount: estimate.amount,
               currency: estimate.currency,
@@ -513,15 +554,18 @@ router.post('/convert-estimate', async (req, res, next) => {
       result: { order },
     } = await ordersApi.createOrder(orderRequest);
 
-    const paymentRequests = buildPaymentRequestsFromEstimate(estimate, estimate.currency);
+    const paymentRequests = buildPaymentRequestsFromEstimate(
+      estimate,
+      estimate.currency,
+    );
 
     const requestBody = {
       idempotencyKey: payload.idempotencyKey,
       invoice: {
-        deliveryMethod: 'EMAIL',
+        deliveryMethod: "EMAIL",
         orderId: order.id,
         title: `${estimate.serviceName} Estimate`,
-        description: estimate.notes || 'Generated from estimate',
+        description: estimate.notes || "Generated from estimate",
         primaryRecipient: {
           customerId: payload.customerId,
         },
@@ -540,13 +584,15 @@ router.post('/convert-estimate', async (req, res, next) => {
     } = await invoicesApi.createInvoice(requestBody);
 
     estimateStore.updateEstimate(estimate.id, {
-      status: 'converted',
+      status: "converted",
       invoiceId: invoice.id,
       convertedAt: new Date().toISOString(),
     });
 
     reminderQueue.scheduleFromInvoice(invoice);
-    res.redirect(`view/${payload.locationId}/${payload.customerId}/${invoice.id}`);
+    res.redirect(
+      `view/${payload.locationId}/${payload.customerId}/${invoice.id}`,
+    );
   } catch (error) {
     next(error);
   }
@@ -565,7 +611,7 @@ router.post('/convert-estimate', async (req, res, next) => {
  *  invoiceId: Id of the invoice
  *  invoiceVersion: The version of the invoice
  */
-router.post('/publish', async (req, res, next) => {
+router.post("/publish", async (req, res, next) => {
   let payload;
   try {
     payload = validateRequest(publishInvoiceSchema, req.body);
@@ -573,7 +619,8 @@ router.post('/publish', async (req, res, next) => {
     return next(validationError);
   }
 
-  const { idempotencyKey, locationId, customerId, invoiceId, invoiceVersion } = payload;
+  const { idempotencyKey, locationId, customerId, invoiceId, invoiceVersion } =
+    payload;
 
   try {
     let versionToPublish = parseInt(invoiceVersion, 10);
@@ -590,11 +637,15 @@ router.post('/publish', async (req, res, next) => {
     } catch (lookupError) {
       // Proceed with the supplied version if lookup fails
       // eslint-disable-next-line no-console
-      console.warn(`[Invoice] Failed to fetch latest version for ${invoiceId}: ${lookupError.message}`);
+      console.warn(
+        `[Invoice] Failed to fetch latest version for ${invoiceId}: ${lookupError.message}`,
+      );
     }
 
     if (latestInvoice) {
-      const scheduledAtMs = latestInvoice.scheduledAt ? new Date(latestInvoice.scheduledAt).getTime() : 0;
+      const scheduledAtMs = latestInvoice.scheduledAt
+        ? new Date(latestInvoice.scheduledAt).getTime()
+        : 0;
       const now = Date.now();
       if (!scheduledAtMs || scheduledAtMs <= now) {
         const nextWindow = new Date(now + 10 * 60 * 1000).toISOString();
@@ -613,7 +664,9 @@ router.post('/publish', async (req, res, next) => {
           versionToPublish = updatedInvoice.version;
         } catch (updateError) {
           // eslint-disable-next-line no-console
-          console.warn(`[Invoice] Failed to update scheduledAt for ${invoiceId}: ${updateError.message}`);
+          console.warn(
+            `[Invoice] Failed to update scheduledAt for ${invoiceId}: ${updateError.message}`,
+          );
         }
       }
     }
@@ -628,7 +681,9 @@ router.post('/publish', async (req, res, next) => {
     res.redirect(`view/${locationId}/${customerId}/${result.invoice.id}`);
   } catch (error) {
     if (error?.errors?.length) {
-      error.message = error.errors.map((err) => err.detail || err.message).join(' | ');
+      error.message = error.errors
+        .map((err) => err.detail || err.message)
+        .join(" | ");
       error.status = error.status || 400;
     }
     next(error);
@@ -647,7 +702,7 @@ router.post('/publish', async (req, res, next) => {
  *  invoiceId: Id of the invoice
  *  invoiceVersion: The version of the invoice
  */
-router.post('/cancel', async (req, res, next) => {
+router.post("/cancel", async (req, res, next) => {
   let payload;
   try {
     payload = validateRequest(mutateInvoiceSchema, req.body);
@@ -682,7 +737,7 @@ router.post('/cancel', async (req, res, next) => {
  *  invoiceId: Id of the invoice
  *  invoiceVersion: The version of the invoice
  */
-router.post('/delete', async (req, res, next) => {
+router.post("/delete", async (req, res, next) => {
   let payload;
   try {
     payload = validateRequest(mutateInvoiceSchema, req.body);

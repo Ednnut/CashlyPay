@@ -14,27 +14,27 @@ Licensed under the Apache License, Version 2.0
 @import url(https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap);
 
 /* Base Imports */
-@import 'base/theme.css';
-@import 'base/reset.css';
-@import 'base/responsive.css';
+@import "base/theme.css";
+@import "base/reset.css";
+@import "base/responsive.css";
 
 /* Component Imports */
-@import 'components/buttons.css';
-@import 'components/forms.css';
-@import 'components/tags.css';
-@import 'components/invoice-card.css';
-@import 'components/data-table.css';
-@import 'components/charts.css';
+@import "components/buttons.css";
+@import "components/forms.css";
+@import "components/tags.css";
+@import "components/invoice-card.css";
+@import "components/data-table.css";
+@import "components/charts.css";
 
 /* Layout Imports */
-@import 'layouts/grid-system.css';
-@import 'layouts/navigation.css';
-@import 'layouts/dashboard.css';
-@import 'layouts/footer.css';
+@import "layouts/grid-system.css";
+@import "layouts/navigation.css";
+@import "layouts/dashboard.css";
+@import "layouts/footer.css";
 
 /* Page-specific Imports */
-@import 'pages/invoice.css';
-@import 'pages/management.css';
+@import "pages/invoice.css";
+@import "pages/management.css";
 
 /* Utility Classes */
 .flex {

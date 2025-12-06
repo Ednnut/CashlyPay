@@ -14,12 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const express = require('express');
-const crypto = require('crypto');
-const { customersApi, invoicesApi, locationsApi } = require('../util/square-client');
-const serviceStore = require('../util/service-store');
-const estimateStore = require('../util/estimate-store');
-const subscriptionStore = require('../util/subscription-store');
+const express = require("express");
+const crypto = require("crypto");
+const {
+  customersApi,
+  invoicesApi,
+  locationsApi,
+} = require("../util/square-client");
+const serviceStore = require("../util/service-store");
+const estimateStore = require("../util/estimate-store");
+const subscriptionStore = require("../util/subscription-store");
 
 const router = express.Router();
 
@@ -35,7 +39,7 @@ const router = express.Router();
  *  customerId: Id of the selected customer
  *  locationId: Id of the location that the invoices belongs to
  */
-router.get('/:locationId/:customerId', async (req, res, next) => {
+router.get("/:locationId/:customerId", async (req, res, next) => {
   // Post request body contains id of item that is going to be purchased
   const { customerId, locationId } = req.params;
   try {
@@ -55,12 +59,13 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
     const allServices = serviceStore.list();
     let serviceItems = [...allServices];
 
-    const normalizedCategory = category && category.toLowerCase() !== 'all' ? category : null;
+    const normalizedCategory =
+      category && category.toLowerCase() !== "all" ? category : null;
     const normalizedInvoiceStatus =
-      invoiceStatus && invoiceStatus.toLowerCase() !== 'all'
+      invoiceStatus && invoiceStatus.toLowerCase() !== "all"
         ? invoiceStatus.toUpperCase()
-        : 'ALL';
-    const normalizedInvoiceSearch = invoiceSearch ? invoiceSearch.trim() : '';
+        : "ALL";
+    const normalizedInvoiceSearch = invoiceSearch ? invoiceSearch.trim() : "";
 
     if (normalizedCategory) {
       serviceItems = serviceStore.findByCategory(category);
@@ -88,19 +93,19 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
           customerIds: [customerId],
         },
         sort: {
-          field: 'INVOICE_SORT_DATE',
+          field: "INVOICE_SORT_DATE",
         },
       },
     });
 
     // Helper function to format dates
     const formatDate = (dateString) => {
-      if (!dateString) return 'No due date';
+      if (!dateString) return "No due date";
       const date = new Date(dateString);
-      return new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
+      return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
       }).format(date);
     };
 
@@ -108,17 +113,19 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
     const estimates = estimateStore.listByCustomer(customerId);
     const subscriptions = subscriptionStore.listByCustomer(customerId);
     let filteredInvoices = rawInvoices;
-    if (normalizedInvoiceStatus !== 'ALL') {
-      filteredInvoices = filteredInvoices.filter((invoice) => invoice.status === normalizedInvoiceStatus);
+    if (normalizedInvoiceStatus !== "ALL") {
+      filteredInvoices = filteredInvoices.filter(
+        (invoice) => invoice.status === normalizedInvoiceStatus,
+      );
     }
 
     if (normalizedInvoiceSearch) {
       const term = normalizedInvoiceSearch.toLowerCase();
       filteredInvoices = filteredInvoices.filter((invoice) => {
-        const title = invoice.title || '';
-        const number = invoice.invoiceNumber || '';
-        const customerName = `${invoice.primaryRecipient?.givenName || ''} ${
-          invoice.primaryRecipient?.familyName || ''
+        const title = invoice.title || "";
+        const number = invoice.invoiceNumber || "";
+        const customerName = `${invoice.primaryRecipient?.givenName || ""} ${
+          invoice.primaryRecipient?.familyName || ""
         }`;
         return (
           title.toLowerCase().includes(term) ||
@@ -129,7 +136,7 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
     }
 
     // Render the invoice management page
-    res.render('management', {
+    res.render("management", {
       locationId,
       serviceItems,
       customer,
@@ -139,12 +146,14 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
       idempotencyKey: crypto.randomUUID(),
       formatDate, // Pass the helper function to the template
       serviceFilters: {
-        q: q || '',
-        category: normalizedCategory || 'all',
+        q: q || "",
+        category: normalizedCategory || "all",
         totalConfigured: allServices.length,
         categories: [
-          'all',
-          ...new Set(allServices.map((service) => service.category).filter(Boolean)),
+          "all",
+          ...new Set(
+            allServices.map((service) => service.category).filter(Boolean),
+          ),
         ],
       },
       invoiceFilters: {
@@ -152,20 +161,20 @@ router.get('/:locationId/:customerId', async (req, res, next) => {
         search: normalizedInvoiceSearch,
         total: rawInvoices.length,
         statusOptions: [
-          'ALL',
-          'DRAFT',
-          'SCHEDULED',
-          'UNPAID',
-          'PARTIALLY_PAID',
-          'PAID',
-          'OVERDUE',
-          'CANCELED',
+          "ALL",
+          "DRAFT",
+          "SCHEDULED",
+          "UNPAID",
+          "PARTIALLY_PAID",
+          "PAID",
+          "OVERDUE",
+          "CANCELED",
         ],
       },
       recurringFilters: {
         total: subscriptions.length,
       },
-      defaultCurrency: location.currency || 'USD',
+      defaultCurrency: location.currency || "USD",
     });
   } catch (error) {
     next(error);

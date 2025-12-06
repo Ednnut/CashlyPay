@@ -48,7 +48,7 @@
 
 /* Table Cell Types */
 .data-table__cell-money {
-  font-family: 'SF Mono', 'Roboto Mono', monospace;
+  font-family: "SF Mono", "Roboto Mono", monospace;
   font-weight: 500;
   color: var(--color-brand);
 }
@@ -132,7 +132,7 @@
 }
 
 .data-table--loading tbody::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-color: var(--theme-surface-raised);

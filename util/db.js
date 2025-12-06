@@ -1,12 +1,13 @@
-const path = require('path');
-const Database = require('better-sqlite3');
+const path = require("path");
+const Database = require("better-sqlite3");
 
-const DB_FILE = path.join(__dirname, '../data/app.db');
+const DB_FILE = path.join(__dirname, "../data/app.db");
 
 const db = new Database(DB_FILE);
-db.pragma('journal_mode = WAL');
+db.pragma("journal_mode = WAL");
 
-db.prepare(`
+db.prepare(
+  `
   CREATE TABLE IF NOT EXISTS services (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -19,9 +20,11 @@ db.prepare(`
     allow_gift_card INTEGER DEFAULT 1,
     updated_at TEXT NOT NULL
   )
-`).run();
+`,
+).run();
 
-db.prepare(`
+db.prepare(
+  `
   CREATE TABLE IF NOT EXISTS activity_log (
     id TEXT PRIMARY KEY,
     invoice_id TEXT,
@@ -29,6 +32,7 @@ db.prepare(`
     payload TEXT,
     timestamp TEXT NOT NULL
   )
-`).run();
+`,
+).run();
 
 module.exports = db;

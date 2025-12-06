@@ -58,8 +58,8 @@
   cursor: pointer;
 }
 
-.form-checkbox input[type='checkbox'],
-.form-radio input[type='radio'] {
+.form-checkbox input[type="checkbox"],
+.form-radio input[type="radio"] {
   width: 20px;
   height: 20px;
   border: 2px solid var(--cash-gray-300);
@@ -67,12 +67,12 @@
   transition: all var(--transition-fast) var(--transition-ease);
 }
 
-.form-checkbox input[type='checkbox']:checked {
+.form-checkbox input[type="checkbox"]:checked {
   background-color: var(--cash-green);
   border-color: var(--cash-green);
 }
 
-.form-radio input[type='radio'] {
+.form-radio input[type="radio"] {
   border-radius: 50%;
 }
 
@@ -100,7 +100,7 @@
 }
 
 .form-money::before {
-  content: '$';
+  content: "$";
   position: absolute;
   left: var(--space-md);
   top: 50%;

@@ -136,7 +136,11 @@ tfoot tr {
   position: sticky;
   bottom: 0;
   margin-top: var(--space-2xl);
-  background: radial-gradient(circle at top, rgba(12, 12, 12, 0.95), rgba(8, 8, 8, 0.98));
+  background: radial-gradient(
+    circle at top,
+    rgba(12, 12, 12, 0.95),
+    rgba(8, 8, 8, 0.98)
+  );
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-xl);
   padding: var(--space-lg);

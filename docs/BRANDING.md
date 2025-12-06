@@ -29,19 +29,19 @@
 
 ```css
 @font-face {
-  font-family: 'Cash Sans';
+  font-family: "Cash Sans";
   src:
-    url('/fonts/CashSans-Regular.woff2') format('woff2'),
-    url('/fonts/CashSans-Regular.woff') format('woff');
+    url("/fonts/CashSans-Regular.woff2") format("woff2"),
+    url("/fonts/CashSans-Regular.woff") format("woff");
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Cash Sans';
+  font-family: "Cash Sans";
   src:
-    url('/fonts/CashSans-Bold.woff2') format('woff2'),
-    url('/fonts/CashSans-Bold.woff') format('woff');
+    url("/fonts/CashSans-Bold.woff2") format("woff2"),
+    url("/fonts/CashSans-Bold.woff") format("woff");
   font-weight: bold;
   font-style: normal;
 }
@@ -64,7 +64,7 @@
   <head>
     <style>
       body {
-        font-family: 'Cash Sans', Helvetica, Arial, sans-serif;
+        font-family: "Cash Sans", Helvetica, Arial, sans-serif;
         line-height: 1.5;
         color: #000000;
       }

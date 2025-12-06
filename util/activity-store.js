@@ -1,17 +1,25 @@
-const db = require('./db');
+const db = require("./db");
 
 const insertStmt = db.prepare(
-  'INSERT INTO activity_log (id, invoice_id, type, payload, timestamp) VALUES (?, ?, ?, ?, ?)' 
+  "INSERT INTO activity_log (id, invoice_id, type, payload, timestamp) VALUES (?, ?, ?, ?, ?)",
 );
 
 const addEvent = (event) => {
   const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  insertStmt.run(id, event.invoiceId || null, event.type, JSON.stringify(event.payload || null), new Date().toISOString());
+  insertStmt.run(
+    id,
+    event.invoiceId || null,
+    event.type,
+    JSON.stringify(event.payload || null),
+    new Date().toISOString(),
+  );
 };
 
 const listByInvoice = (invoiceId) => {
   return db
-    .prepare('SELECT * FROM activity_log WHERE invoice_id = ? ORDER BY timestamp ASC')
+    .prepare(
+      "SELECT * FROM activity_log WHERE invoice_id = ? ORDER BY timestamp ASC",
+    )
     .all(invoiceId)
     .map((row) => ({
       id: row.id,
@@ -24,7 +32,7 @@ const listByInvoice = (invoiceId) => {
 
 const listAll = () => {
   return db
-    .prepare('SELECT * FROM activity_log ORDER BY timestamp ASC')
+    .prepare("SELECT * FROM activity_log ORDER BY timestamp ASC")
     .all()
     .map((row) => ({
       id: row.id,

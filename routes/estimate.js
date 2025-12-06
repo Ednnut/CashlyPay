@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const express = require('express');
-const Joi = require('joi');
-const { customersApi, locationsApi } = require('../util/square-client');
-const serviceStore = require('../util/service-store');
-const estimateStore = require('../util/estimate-store');
+const express = require("express");
+const Joi = require("joi");
+const { customersApi, locationsApi } = require("../util/square-client");
+const serviceStore = require("../util/service-store");
+const estimateStore = require("../util/estimate-store");
 
 const router = express.Router();
 
@@ -29,11 +29,13 @@ const attachmentSchema = Joi.array()
     Joi.object({
       name: Joi.string().trim().max(120).required(),
       url: Joi.string().uri().required(),
-    })
+    }),
   )
   .default([]);
 
-const booleanSchema = Joi.boolean().truthy('true', '1', 'on').falsy('false', '0', 'off');
+const booleanSchema = Joi.boolean()
+  .truthy("true", "1", "on")
+  .falsy("false", "0", "off");
 
 const createEstimateSchema = Joi.object({
   customerId: Joi.string().required(),
@@ -45,16 +47,16 @@ const createEstimateSchema = Joi.object({
   depositPercentage: Joi.number().min(0).max(100).default(0),
   taxPercent: Joi.number().min(0).max(100).default(0),
   surchargeAmount: Joi.number().integer().min(0).default(0),
-  notes: Joi.string().allow('').max(500).default(''),
-  poNumber: Joi.string().allow('').max(64).default(''),
-  customNotes: Joi.string().allow('').max(500).default(''),
+  notes: Joi.string().allow("").max(500).default(""),
+  poNumber: Joi.string().allow("").max(64).default(""),
+  customNotes: Joi.string().allow("").max(500).default(""),
   attachments: attachmentSchema,
   allowCard: booleanSchema.default(true),
   allowBank: booleanSchema.default(false),
   allowGiftCard: booleanSchema.default(true),
   paymentSource: Joi.string()
-    .valid('AUTO', 'CARD_ON_FILE', 'BANK_ON_FILE', 'NONE')
-    .default('AUTO'),
+    .valid("AUTO", "CARD_ON_FILE", "BANK_ON_FILE", "NONE")
+    .default("AUTO"),
 });
 
 const calculateTotals = ({
@@ -82,7 +84,7 @@ const calculateTotals = ({
   };
 };
 
-router.get('/new/:locationId/:customerId', async (req, res, next) => {
+router.get("/new/:locationId/:customerId", async (req, res, next) => {
   const { locationId, customerId } = req.params;
   try {
     const [
@@ -97,40 +99,45 @@ router.get('/new/:locationId/:customerId', async (req, res, next) => {
       locationsApi.retrieveLocation(locationId),
     ]);
 
-    res.render('estimate', {
+    res.render("estimate", {
       customer,
       locationId,
       serviceItems: serviceStore.list(),
-      defaultCurrency: location.currency || 'USD',
+      defaultCurrency: location.currency || "USD",
     });
   } catch (error) {
     next(error);
   }
 });
 
-router.post('/create', async (req, res, next) => {
+router.post("/create", async (req, res, next) => {
   try {
     let normalizedAttachments = [];
-    if (req.body.attachments && typeof req.body.attachments === 'string') {
+    if (req.body.attachments && typeof req.body.attachments === "string") {
       try {
         normalizedAttachments = JSON.parse(req.body.attachments);
       } catch (error) {
         normalizedAttachments = req.body.attachments
-          .split('\n')
+          .split("\n")
           .map((line) => line.trim())
           .filter(Boolean)
           .map((line) => {
-            const [name, url] = line.split('|').map((part) => part.trim());
+            const [name, url] = line.split("|").map((part) => part.trim());
             return { name, url };
           })
           .filter((attachment) => attachment.name && attachment.url);
       }
     }
 
-    const booleanFields = ['allowCard', 'allowBank', 'allowGiftCard'];
+    const booleanFields = ["allowCard", "allowBank", "allowGiftCard"];
     const normalizedBody = { ...req.body, attachments: normalizedAttachments };
     booleanFields.forEach((field) => {
-      normalizedBody[field] = Object.prototype.hasOwnProperty.call(req.body, field) ? 'true' : 'false';
+      normalizedBody[field] = Object.prototype.hasOwnProperty.call(
+        req.body,
+        field,
+      )
+        ? "true"
+        : "false";
     });
 
     const payload = await createEstimateSchema.validateAsync(
@@ -140,12 +147,12 @@ router.post('/create', async (req, res, next) => {
       {
         abortEarly: false,
         stripUnknown: true,
-      }
+      },
     );
 
     const service = serviceStore.findById(payload.serviceId);
     if (!service) {
-      const err = new Error('Selected service is no longer available.');
+      const err = new Error("Selected service is no longer available.");
       err.status = 400;
       throw err;
     }
@@ -174,7 +181,9 @@ router.post('/create', async (req, res, next) => {
       ...totals,
     });
 
-    res.redirect(`/management/${payload.locationId}/${payload.customerId}?estimate=${estimate.id}`);
+    res.redirect(
+      `/management/${payload.locationId}/${payload.customerId}?estimate=${estimate.id}`,
+    );
   } catch (error) {
     if (error.isJoi) {
       error.status = 400;
