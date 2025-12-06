@@ -256,6 +256,9 @@ block content
       if invoices && invoices.length
         .invoice-list
           each invoice in invoices
+            - const primaryRequest = Array.isArray(invoice.paymentRequests) && invoice.paymentRequests.length ? invoice.paymentRequests.find((req) => req.requestType === 'BALANCE') || invoice.paymentRequests[0] : null;
+            - const requestAmount = primaryRequest && (primaryRequest.computedAmountMoney || primaryRequest.total || primaryRequest.amountMoney);
+            - const amountValue = requestAmount && requestAmount.amount ? parseInt(requestAmount.amount, 10) : null;
             a.invoice-item(href=`/invoice/view/${locationId}/${customer.id}/${invoice.id}`)
               .invoice-item__left
                 .invoice-item__header
@@ -276,13 +279,16 @@ block content
                   .meta-item
                     svg.icon(viewBox="0 0 20 20")
                       path(d="M6 2h8a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v14h8V4H6zm2 2h4m-4 3h4m-4 3h4" stroke="currentColor" stroke-width="2" stroke-linecap="round")
-                    span Due #{formatDate(invoice.paymentRequests[0].dueDate)}
-                  
-                  if invoice.paymentRequests[0].computedAmountMoney
+                    if primaryRequest && primaryRequest.dueDate
+                      span Due #{formatDate(primaryRequest.dueDate)}
+                    else
+                      span No due date
+
+                  if amountValue !== null
                     .meta-item
                       svg.icon(viewBox="0 0 20 20")
                         path(d="M10 2a8 8 0 100 16 8 8 0 000-16zM5.5 10h9M8 7l-3 3 3 3m4-6l3 3-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-                      span.amount $#{(parseInt(invoice.paymentRequests[0].computedAmountMoney.amount) / 100).toFixed(2)}
+                      span.amount $#{(amountValue / 100).toFixed(2)}
               
               .invoice-item__right
                 button.button.button-icon

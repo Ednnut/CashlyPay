@@ -26,7 +26,6 @@ router.get('/', (req, res) => {
   });
 
   const totalReminders = filtered.filter((item) => item.type === 'REMINDER_SENT').length;
-  const totalApprovals = filtered.filter((item) => item.type === 'APPROVAL_STATUS_CHANGED').length;
   const reminderBacklog = reminderQueue.listReminders().length;
   const recentActivities = filtered.slice(-10).reverse();
 
@@ -34,7 +33,6 @@ router.get('/', (req, res) => {
     metrics: {
       totalEvents: filtered.length,
       totalReminders,
-      totalApprovals,
       reminderBacklog,
     },
     recentActivities,

@@ -98,6 +98,40 @@
   color: var(--theme-error);
 }
 
+@media (max-width: 900px) {
+  .dashboard {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .main-wrapper {
+    margin-left: 0;
+    padding: var(--space-md);
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .button-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .button-group .button,
+  .button-group button {
+    width: 100%;
+    justify-content: center;
+  }
+}
 /* Search and Filters */
 .search-filters {
   display: flex;

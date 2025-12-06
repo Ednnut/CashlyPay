@@ -127,7 +127,7 @@ The `/` route now surfaces organization-wide insights: hero KPIs for customer co
 
 ## Analytics and admin
 
-- `/analytics` now provides KPI cards (events, reminders sent, approvals, backlog) plus a recent activity feed, complete with type/timeframe filters.
+- `/analytics` now provides KPI cards (events, reminders sent, backlog) plus a recent activity feed, complete with type/timeframe filters.
 - `/admin/reminders` exposes the reminder queue for visibility and manual runs.
 
 ## Estimates and advanced invoices
@@ -150,7 +150,7 @@ The `/` route now surfaces organization-wide insights: hero KPIs for customer co
 - Square webhook callbacks should be pointed to `POST /webhooks/square`. Events are persisted via `util/activity-store.js`; reminders for upcoming/overdue invoices are scheduled through `util/reminder-queue.js`. Set `SQUARE_WEBHOOK_SIGNATURE_KEY` in `.env` to enable signature verification.
 - Reminder jobs are processed in-process on an interval and logged as activity entries so finance teams can review what was sent and when.
 - Activity data can be reused to build timelines or analytics dashboards for each invoice.
-- Draft invoices now flow through an approval workflow tracked in `data/approvals.json` via `util/approval-store.js`. Approval status is surfaced on the invoice detail page, and publishing is blocked until approval is granted. Use `/admin/reminders` to monitor reminder jobs, and `/analytics` to review KPI snapshots. Swap the stores with Postgres-backed implementations when moving beyond the local SQLite setup.
+- Invoices publish immediately after creation; reminder jobs continue to flow through `util/reminder-queue.js` and activity events for publish/cancel actions can be observed in `/analytics`.
 
 ## Application flow
 

@@ -21,7 +21,6 @@ const { cardsApi, ordersApi, invoicesApi, locationsApi } = require('../util/squa
 const estimateStore = require('../util/estimate-store');
 const reminderQueue = require('../util/reminder-queue');
 const activityStore = require('../util/activity-store');
-const approvalStore = require('../util/approval-store');
 
 const router = express.Router();
 
@@ -62,14 +61,6 @@ const convertEstimateSchema = Joi.object({
   customerId: Joi.string().required(),
   locationId: Joi.string().required(),
   idempotencyKey: Joi.string().trim().min(10).max(64).required(),
-});
-
-const approvalSchema = Joi.object({
-  invoiceId: Joi.string().required(),
-  locationId: Joi.string().required(),
-  customerId: Joi.string().required(),
-  action: Joi.string().valid('APPROVE', 'REJECT').required(),
-  note: Joi.string().allow('').max(500),
 });
 
 const validateRequest = (schema, payload) => {
@@ -228,18 +219,41 @@ router.get('/view/:locationId/:customerId/:invoiceId', async (req, res, next) =>
       }).format(date);
     };
 
+    const paymentRequest = Array.isArray(invoice.paymentRequests) && invoice.paymentRequests.length
+      ? invoice.paymentRequests.find((request) => request.requestType === 'BALANCE') || invoice.paymentRequests[0]
+      : null;
+
+    const paymentAmountRaw =
+      paymentRequest?.computedAmountMoney?.amount ??
+      paymentRequest?.total?.amount ??
+      paymentRequest?.amountMoney?.amount ??
+      0;
+    const paymentAmount = Number(paymentAmountRaw) || 0;
+
+    const paymentDueDate = paymentRequest?.dueDate || invoice.dueDate || invoice.scheduledAt || null;
+    const paymentMethod = paymentRequest?.automaticPaymentSource || 'NONE';
+
+    const recipient = invoice.primaryRecipient || {};
+    const recipientName = [recipient.givenName, recipient.familyName].filter(Boolean).join(' ').trim()
+      || recipient.companyName
+      || 'Customer';
+    const recipientEmail = recipient.emailAddress || null;
+
     // Render the invoice detail view page
     const activities = activityStore.listByInvoice(invoiceId);
-    const approval = approvalStore.getStatus(invoiceId) || { status: 'NOT_REQUIRED' };
 
     res.render('invoice', {
       locationId,
       customerId,
       invoice,
+      paymentAmount,
+      paymentDueDate,
+      paymentMethod,
+      recipientName,
+      recipientEmail,
       formatDate,
       idempotencyKey: crypto.randomUUID(),
       activities,
-      approval,
     });
   } catch (error) {
     next(error);
@@ -449,7 +463,6 @@ router.post('/create', async (req, res, next) => {
       }
     }
     reminderQueue.scheduleFromInvoice(invoice);
-    approvalStore.setStatus(invoice.id, 'PENDING');
     res.redirect(`view/${locationId}/${customerId}/${invoice.id}`);
   } catch (error) {
     next(error);
@@ -533,7 +546,6 @@ router.post('/convert-estimate', async (req, res, next) => {
     });
 
     reminderQueue.scheduleFromInvoice(invoice);
-    approvalStore.setStatus(invoice.id, 'PENDING');
     res.redirect(`view/${payload.locationId}/${payload.customerId}/${invoice.id}`);
   } catch (error) {
     next(error);
@@ -564,15 +576,61 @@ router.post('/publish', async (req, res, next) => {
   const { idempotencyKey, locationId, customerId, invoiceId, invoiceVersion } = payload;
 
   try {
+    let versionToPublish = parseInt(invoiceVersion, 10);
+    let latestInvoice = null;
+
+    try {
+      const {
+        result: { invoice },
+      } = await invoicesApi.getInvoice(invoiceId);
+      latestInvoice = invoice;
+      if (invoice?.version !== undefined) {
+        versionToPublish = invoice.version;
+      }
+    } catch (lookupError) {
+      // Proceed with the supplied version if lookup fails
+      // eslint-disable-next-line no-console
+      console.warn(`[Invoice] Failed to fetch latest version for ${invoiceId}: ${lookupError.message}`);
+    }
+
+    if (latestInvoice) {
+      const scheduledAtMs = latestInvoice.scheduledAt ? new Date(latestInvoice.scheduledAt).getTime() : 0;
+      const now = Date.now();
+      if (!scheduledAtMs || scheduledAtMs <= now) {
+        const nextWindow = new Date(now + 10 * 60 * 1000).toISOString();
+        try {
+          const {
+            result: { invoice: updatedInvoice },
+          } = await invoicesApi.updateInvoice(invoiceId, {
+            idempotencyKey: crypto.randomUUID(),
+            invoice: {
+              id: invoiceId,
+              version: versionToPublish,
+              scheduledAt: nextWindow,
+            },
+          });
+          latestInvoice = updatedInvoice;
+          versionToPublish = updatedInvoice.version;
+        } catch (updateError) {
+          // eslint-disable-next-line no-console
+          console.warn(`[Invoice] Failed to update scheduledAt for ${invoiceId}: ${updateError.message}`);
+        }
+      }
+    }
+
     // publish invoice
     const { result } = await invoicesApi.publishInvoice(invoiceId, {
-      version: parseInt(invoiceVersion),
+      version: versionToPublish,
       idempotencyKey,
     });
 
     // redirect to the invoice detail view page
     res.redirect(`view/${locationId}/${customerId}/${result.invoice.id}`);
   } catch (error) {
+    if (error?.errors?.length) {
+      error.message = error.errors.map((err) => err.detail || err.message).join(' | ');
+      error.status = error.status || 400;
+    }
     next(error);
   }
 });
@@ -640,34 +698,6 @@ router.post('/delete', async (req, res, next) => {
 
     // invoice doesn't exist anymore, return to the invoice management page after delete the invoice
     res.redirect(`/management/${locationId}/${customerId}`);
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.post('/approval', async (req, res, next) => {
-  let payload;
-  try {
-    payload = await approvalSchema.validateAsync(req.body, { abortEarly: false, stripUnknown: true });
-  } catch (error) {
-    error.status = 400;
-    return next(error);
-  }
-
-  try {
-    const status = approvalStore.setStatus(
-      payload.invoiceId,
-      payload.action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
-      payload.note
-    );
-
-    activityStore.addEvent({
-      invoiceId: payload.invoiceId,
-      type: 'APPROVAL_STATUS_CHANGED',
-      payload: status,
-    });
-
-    res.redirect(`view/${payload.locationId}/${payload.customerId}/${payload.invoiceId}`);
   } catch (error) {
     next(error);
   }

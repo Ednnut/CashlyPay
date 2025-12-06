@@ -8,7 +8,7 @@ block content
     header.section
       .analytics-header
         h1.page-title Ops & Billing Analytics
-        p.text-secondary Quick health check on reminders, approvals, and activity.
+        p.text-secondary Quick health check on reminders and lifecycle activity.
         .hero-actions
           a.button.button-primary(href="/admin/reminders") Reminder Queue
           a.button.button-secondary(href="/analytics") Refresh
@@ -20,7 +20,6 @@ block content
           select(name="type" onchange="this.form.submit()")
             option(value="ALL" selected=filters.type === 'ALL') All Events
             option(value="REMINDER_SENT" selected=filters.type === 'REMINDER_SENT') Reminders
-            option(value="APPROVAL_STATUS_CHANGED" selected=filters.type === 'APPROVAL_STATUS_CHANGED') Approvals
         label
           span.text-secondary Timeframe
           select(name="range" onchange="this.form.submit()")
@@ -39,11 +38,6 @@ block content
           span.value #{metrics.totalReminders}
           div.sparkline.sparkline--reminders
           span.text-secondary Lifecycle nudges dispatched
-        .analytics-card
-          span.label Approval Changes
-          span.value #{metrics.totalApprovals}
-          div.sparkline.sparkline--approvals
-          span.text-secondary Approvals/rejections logged
         .analytics-card
           span.label Reminders Backlog
           span.value #{metrics.reminderBacklog}

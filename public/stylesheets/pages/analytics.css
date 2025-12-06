@@ -87,10 +87,6 @@
   background: linear-gradient(90deg, rgba(0,213,75,0.6), rgba(0,213,75,0.2));
 }
 
-.sparkline--approvals {
-  background: linear-gradient(90deg, rgba(255,204,0,0.5), rgba(0,122,255,0.3));
-}
-
 .sparkline--backlog {
   background: linear-gradient(90deg, rgba(255,59,48,0.6), rgba(255,204,0,0.3));
 }

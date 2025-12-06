@@ -60,9 +60,12 @@ const scheduleReminder = (reminder) => {
 };
 
 const scheduleFromInvoice = (invoice) => {
-  if (!invoice.paymentRequests || !invoice.paymentRequests.length) return;
-  const paymentRequest = invoice.paymentRequests[0];
-  if (!paymentRequest.dueDate) return;
+  if (!Array.isArray(invoice.paymentRequests) || !invoice.paymentRequests.length) return;
+  const paymentRequest =
+    invoice.paymentRequests.find((request) => request.requestType === 'BALANCE') ||
+    invoice.paymentRequests[0];
+
+  if (!paymentRequest || !paymentRequest.dueDate) return;
 
   const dueDate = new Date(paymentRequest.dueDate);
   const reminderDate = new Date(dueDate);
