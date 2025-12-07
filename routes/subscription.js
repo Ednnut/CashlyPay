@@ -42,6 +42,7 @@ const recurringSchema = Joi.object({
   allowCard: Joi.boolean().default(true),
   allowBank: Joi.boolean().default(false),
   allowGiftCard: Joi.boolean().default(true),
+  allowCashApp: Joi.boolean().default(false),
   usageNotes: Joi.string().allow("").max(500).default(""),
 });
 
@@ -106,7 +107,12 @@ router.get("/new/:locationId/:customerId", async (req, res, next) => {
 router.post("/create", async (req, res, next) => {
   let payload;
   try {
-    const booleanFields = ["allowCard", "allowBank", "allowGiftCard"];
+    const booleanFields = [
+      "allowCard",
+      "allowBank",
+      "allowGiftCard",
+      "allowCashApp",
+    ];
     const normalizedBody = { ...req.body };
     booleanFields.forEach((field) => {
       normalizedBody[field] = Object.prototype.hasOwnProperty.call(
@@ -183,6 +189,7 @@ router.post("/create", async (req, res, next) => {
           card: payload.allowCard,
           bankAccount: payload.allowBank,
           squareGiftCard: payload.allowGiftCard,
+          cashAppPay: payload.allowCashApp,
         },
         schedule: buildSchedule(payload.frequency, payload.startDate),
         customFields: [
@@ -214,6 +221,7 @@ router.post("/create", async (req, res, next) => {
       allowCard: payload.allowCard,
       allowBank: payload.allowBank,
       allowGiftCard: payload.allowGiftCard,
+      allowCashApp: payload.allowCashApp,
     });
 
     res.redirect(

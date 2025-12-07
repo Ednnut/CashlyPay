@@ -54,6 +54,7 @@ const createEstimateSchema = Joi.object({
   allowCard: booleanSchema.default(true),
   allowBank: booleanSchema.default(false),
   allowGiftCard: booleanSchema.default(true),
+  allowCashApp: booleanSchema.default(false),
   paymentSource: Joi.string()
     .valid("AUTO", "CARD_ON_FILE", "BANK_ON_FILE", "NONE")
     .default("AUTO"),
@@ -129,7 +130,12 @@ router.post("/create", async (req, res, next) => {
       }
     }
 
-    const booleanFields = ["allowCard", "allowBank", "allowGiftCard"];
+    const booleanFields = [
+      "allowCard",
+      "allowBank",
+      "allowGiftCard",
+      "allowCashApp",
+    ];
     const normalizedBody = { ...req.body, attachments: normalizedAttachments };
     booleanFields.forEach((field) => {
       normalizedBody[field] = Object.prototype.hasOwnProperty.call(
@@ -177,6 +183,7 @@ router.post("/create", async (req, res, next) => {
       allowCard: payload.allowCard,
       allowBank: payload.allowBank,
       allowGiftCard: payload.allowGiftCard,
+      allowCashApp: payload.allowCashApp,
       paymentSource: payload.paymentSource,
       ...totals,
     });

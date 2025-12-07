@@ -50,6 +50,10 @@ const createInvoiceSchema = Joi.object({
     .truthy("true", "1", "on")
     .falsy("false", "0", "off")
     .default(true),
+  allowCashApp: Joi.boolean()
+    .truthy("true", "1", "on")
+    .falsy("false", "0", "off")
+    .default(false),
   paymentSource: Joi.string()
     .valid("AUTO", "CARD_ON_FILE", "BANK_ON_FILE", "NONE")
     .default("AUTO"),
@@ -315,7 +319,12 @@ router.get(
 router.post("/create", async (req, res, next) => {
   let payload;
   try {
-    const booleanFields = ["allowCard", "allowBank", "allowGiftCard"];
+    const booleanFields = [
+      "allowCard",
+      "allowBank",
+      "allowGiftCard",
+      "allowCashApp",
+    ];
     const normalizedBody = { ...req.body };
     booleanFields.forEach((field) => {
       normalizedBody[field] = Object.prototype.hasOwnProperty.call(
@@ -340,6 +349,7 @@ router.post("/create", async (req, res, next) => {
     allowCard,
     allowBank,
     allowGiftCard,
+    allowCashApp,
     paymentSource,
   } = payload;
 
@@ -466,6 +476,7 @@ router.post("/create", async (req, res, next) => {
           bankAccount: allowBank,
           squareGiftCard: allowGiftCard,
           card: allowCard,
+          cashAppPay: allowCashApp,
         },
         // Ensure line items are transferred from order
         lineItems: order.lineItems,
@@ -574,6 +585,7 @@ router.post("/convert-estimate", async (req, res, next) => {
           bankAccount: estimate.allowBank,
           squareGiftCard: estimate.allowGiftCard,
           card: estimate.allowCard,
+          cashAppPay: estimate.allowCashApp,
         },
         customFields: buildCustomFieldsFromEstimate(estimate),
       },

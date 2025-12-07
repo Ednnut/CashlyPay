@@ -9,11 +9,13 @@ block content
     section.subscription-hero
       .subscription-hero__layout
         .subscription-hero__copy
-          a.button.button-icon(href=`/management/${locationId}/${customer.id}`)
-            svg(width="20" height="20" viewBox="0 0 20 20" fill="none")
-              path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-            span Back to Customer
-          span.subscription-hero__eyebrow CashlyPay Subscriptions
+          .subscription-hero__branding
+            a.button.button-icon(href=`/management/${locationId}/${customer.id}`)
+              svg(width="20" height="20" viewBox="0 0 20 20" fill="none")
+                path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+              span Back to Customer
+            span.brand-pill CashlyPay Subscription
+          span.subscription-hero__eyebrow Subscriptions
           h1.subscription-hero__title Create Recurring Plan
           p.subscription-hero__subtitle Automate usage-based billing, deposits, and reminders for #{customer.givenName}.
         .subscription-hero__metrics
@@ -54,6 +56,7 @@ block content
                     data-card=item.paymentMethods && item.paymentMethods.card === false ? 'false' : 'true'
                     data-bank=item.paymentMethods && item.paymentMethods.bankAccount ? 'true' : 'false'
                     data-gift=item.paymentMethods && item.paymentMethods.squareGiftCard ? 'true' : 'false'
+                    data-cashapp=item.paymentMethods && item.paymentMethods.cashAppPay ? 'true' : 'false'
                   )= item.name
             label.form-field
               span.form-label Amount (cents)
@@ -76,28 +79,62 @@ block content
 
         .card
           h3.card-title Payment
-          fieldset.form-field
-            legend.form-label Payment Method Preference
-            label.checkbox-inline
-              input(type="radio" name="paymentMethod" value="CARD_ON_FILE" checked)
-              span Charge card on file
-            label.checkbox-inline
-              input(type="radio" name="paymentMethod" value="BANK_ON_FILE")
-              span Charge bank account
-            label.checkbox-inline
-              input(type="radio" name="paymentMethod" value="MANUAL")
-              span Manual payment
-          fieldset.form-field
-            legend.form-label Accepted payment methods
-            label.checkbox-inline
-              input(type="checkbox" name="allowCard" checked)
-              span Cards & digital wallets
-            label.checkbox-inline
-              input(type="checkbox" name="allowBank")
-              span Bank transfers
-            label.checkbox-inline
-              input(type="checkbox" name="allowGiftCard" checked)
-              span Square gift cards
+          .payment-grid
+            .toggle-card
+              span.toggle-card__label Payment Method Preference
+              .toggle-card__choices
+                label.toggle-option
+                  input(type="radio" name="paymentMethod" value="CARD_ON_FILE" checked)
+                  span.toggle-option__control
+                    span.icon-lock
+                    span.toggle-option__text
+                      strong Charge card on file
+                      span Small auto-charge convenience
+                label.toggle-option
+                  input(type="radio" name="paymentMethod" value="BANK_ON_FILE")
+                  span.toggle-option__control
+                    span.icon-bank
+                    span.toggle-option__text
+                      strong Charge bank account
+                      span Secure ACH payments
+                label.toggle-option
+                  input(type="radio" name="paymentMethod" value="MANUAL")
+                  span.toggle-option__control
+                    span.icon-mail
+                    span.toggle-option__text
+                      strong Manual payment
+                      span Send invoices by email
+            .toggle-card
+              span.toggle-card__label Accepted payment methods
+              .toggle-card__choices
+                label.toggle-option
+                  input(type="checkbox" name="allowCard" checked)
+                  span.toggle-option__control
+                    span.icon-card
+                    span.toggle-option__text
+                      strong Cards & digital wallets
+                      span Supported everywhere
+                label.toggle-option
+                  input(type="checkbox" name="allowBank")
+                  span.toggle-option__control
+                    span.icon-bank
+                    span.toggle-option__text
+                      strong Bank transfers
+                      span ACH and wire
+                label.toggle-option
+                  input(type="checkbox" name="allowGiftCard" checked)
+                  span.toggle-option__control
+                    span.icon-gift
+                    span.toggle-option__text
+                      strong Square gift cards
+                      span Great for promos
+                label.toggle-option
+                  input(type="checkbox" name="allowCashApp")
+                  span.toggle-option__control
+                    span.icon-cash-app
+                    span.toggle-option__text
+                      strong Cash App Pay
+                      span One-tap wallet
 
         .card
           h3.card-title Notes
@@ -121,6 +158,7 @@ block scripts
       const cardCheckbox = document.querySelector('input[name="allowCard"]');
       const bankCheckbox = document.querySelector('input[name="allowBank"]');
       const giftCheckbox = document.querySelector('input[name="allowGiftCard"]');
+      const cashCheckbox = document.querySelector('input[name="allowCashApp"]');
       if (!serviceSelect || !amountInput) return;
       const applyDefaults = () => {
         const selected = serviceSelect.options[serviceSelect.selectedIndex];
@@ -141,6 +179,9 @@ block scripts
         }
         if (giftCheckbox) {
           giftCheckbox.checked = selected.getAttribute('data-gift') === 'true';
+        }
+        if (cashCheckbox) {
+          cashCheckbox.checked = selected.getAttribute('data-cashapp') === 'true';
         }
       };
       serviceSelect.addEventListener('change', function () {

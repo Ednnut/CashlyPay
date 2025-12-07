@@ -14,6 +14,7 @@ const DEFAULT_SERVICES = [
       card: true,
       bankAccount: false,
       squareGiftCard: true,
+      cashAppPay: true,
     },
   },
   {
@@ -28,6 +29,7 @@ const DEFAULT_SERVICES = [
       card: true,
       bankAccount: false,
       squareGiftCard: false,
+      cashAppPay: false,
     },
   },
   {
@@ -41,6 +43,7 @@ const DEFAULT_SERVICES = [
       card: true,
       bankAccount: true,
       squareGiftCard: false,
+      cashAppPay: true,
     },
   },
 ];

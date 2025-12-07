@@ -227,6 +227,34 @@
   padding: var(--space-lg);
 }
 
+.service-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+@media (min-width: 640px) {
+  .service-card__header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.service-card__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.service-card__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
 .service-card__title {
   font-size: var(--text-lg);
   font-weight: 600;
@@ -239,7 +267,7 @@
   font-weight: 600;
   color: var(--theme-accent);
   font-family: var(--font-mono);
-  margin: 0 0 var(--space-sm);
+  margin: 0;
 }
 
 .service-card__description {
@@ -248,10 +276,161 @@
   margin: 0;
 }
 
+.service-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
+
+.chip {
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.25rem 0.65rem;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.service-card__note {
+  font-size: var(--text-xs);
+  color: var(--theme-warning);
+  margin-top: var(--space-sm);
+}
+
 .service-card__action {
   padding: var(--space-md);
   background: var(--theme-surface-raised);
   border-top: 1px solid var(--theme-border);
+}
+
+.service-card__payment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.toggle-card {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.toggle-card__label {
+  font-size: var(--text-xs);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.toggle-card__choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.toggle-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.55rem 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.toggle-option input {
+  display: none;
+}
+
+.toggle-option__control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.toggle-option__control::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-option input:checked + .toggle-option__control::before {
+  border-color: var(--theme-accent);
+  background: rgba(0, 213, 75, 0.2);
+}
+
+.toggle-option__text strong {
+  display: block;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+}
+
+.toggle-option__text span {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.toggle-option__control span {
+  display: block;
+}
+
+.toggle-option__control span.icon-card::before {
+  content: "💳";
+}
+
+.toggle-option__control span.icon-bank::before {
+  content: "🏦";
+}
+
+.toggle-option__control span.icon-gift::before {
+  content: "🎁";
+}
+
+.toggle-option__control span.icon-cash-app::before {
+  content: "🅲";
+  font-weight: 700;
+}
+
+.toggle-option__control span.icon-lock::before {
+  content: "⚡";
+}
+
+.toggle-option__control span.icon-mail::before {
+  content: "✉️";
+}
+
+.service-card__select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.service-card__select select {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface);
+  color: var(--text-primary);
+  padding: 0.5rem 0.75rem;
+}
+
+.payment-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-secondary);
 }
 
 /* Invoice List */

@@ -44,6 +44,7 @@ block content
                     data-card=item.paymentMethods && item.paymentMethods.card === false ? 'false' : 'true'
                     data-bank=item.paymentMethods && item.paymentMethods.bankAccount ? 'true' : 'false'
                     data-gift=item.paymentMethods && item.paymentMethods.squareGiftCard ? 'true' : 'false'
+                    data-cashapp=item.paymentMethods && item.paymentMethods.cashAppPay ? 'true' : 'false'
                   )= item.name
             label.form-field
               span.form-label Base Amount
@@ -67,25 +68,69 @@ block content
 
         .card
           h3.card-title Payment Preferences
-          fieldset.form-field
-            legend.form-label Accepted payment methods
-            label.checkbox-inline
-              input(type="checkbox" name="allowCard" checked)
-              span Cards & digital wallets
-            label.checkbox-inline
-              input(type="checkbox" name="allowBank")
-              span Bank transfer
-            label.checkbox-inline
-              input(type="checkbox" name="allowGiftCard" checked)
-              span Square gift card
-
-          label.form-field
-            span.form-label Preferred payment source
-            select(name="paymentSource")
-              option(value="AUTO" selected) Auto detect
-              option(value="CARD_ON_FILE") Charge card on file
-              option(value="BANK_ON_FILE") Charge bank on file
-              option(value="NONE") Manual payment
+          .payment-grid
+            .toggle-card
+              span.toggle-card__label Accepted payment methods
+            .toggle-card__choices
+              label.toggle-option
+                input(type="checkbox" name="allowCard" checked)
+                span.toggle-option__control
+                  span.icon-card
+                    span.toggle-option__text
+                      strong Cards & digital wallets
+                      span Customer-facing checkout
+                label.toggle-option
+                  input(type="checkbox" name="allowBank")
+                  span.toggle-option__control
+                    span.icon-bank
+                    span.toggle-option__text
+                      strong Bank transfer
+                      span ACH or wire payment
+              label.toggle-option
+                input(type="checkbox" name="allowGiftCard" checked)
+                span.toggle-option__control
+                  span.icon-gift
+                  span.toggle-option__text
+                    strong Square gift card
+                    span Perfect for loyalty
+              label.toggle-option
+                input(type="checkbox" name="allowCashApp")
+                span.toggle-option__control
+                  span.icon-cash-app
+                  span.toggle-option__text
+                    strong Cash App Pay
+                    span Social payments
+            .toggle-card
+              span.toggle-card__label Preferred payment source
+              .toggle-card__choices.toggle-card__choices--compact
+                label.toggle-option
+                  input(type="radio" name="paymentSource" value="AUTO" checked)
+                  span.toggle-option__control
+                    span.icon-auto
+                    span.toggle-option__text
+                      strong Auto detect
+                      span Use card/bank when available
+                label.toggle-option
+                  input(type="radio" name="paymentSource" value="CARD_ON_FILE")
+                  span.toggle-option__control
+                    span.icon-lock
+                    span.toggle-option__text
+                      strong Charge card on file
+                      span Ideal for regular retainers
+                label.toggle-option
+                  input(type="radio" name="paymentSource" value="BANK_ON_FILE")
+                  span.toggle-option__control
+                    span.icon-bank
+                    span.toggle-option__text
+                      strong Charge bank on file
+                      span Lower fees via ACH
+                label.toggle-option
+                  input(type="radio" name="paymentSource" value="NONE")
+                  span.toggle-option__control
+                    span.icon-mail
+                    span.toggle-option__text
+                      strong Manual payment
+                      span Send invoice manually
 
         .card
           h3.card-title Attachments & Notes
@@ -121,7 +166,8 @@ block scripts
       const cardCheckbox = document.querySelector('input[name="allowCard"]');
       const bankCheckbox = document.querySelector('input[name="allowBank"]');
       const giftCheckbox = document.querySelector('input[name="allowGiftCard"]');
-      const paymentSourceSelect = document.querySelector('select[name="paymentSource"]');
+      const cashAppCheckbox = document.querySelector('input[name="allowCashApp"]');
+      const paymentSourceRadios = document.querySelectorAll('input[name="paymentSource"]');
       const attachmentInput = document.getElementById('attachmentUploader');
       const attachmentList = document.getElementById('attachmentList');
       const attachmentsField = document.getElementById('attachmentsData');
@@ -148,8 +194,14 @@ block scripts
         if (giftCheckbox) {
           giftCheckbox.checked = selected.getAttribute('data-gift') === 'true';
         }
-        if (paymentSourceSelect) {
-          paymentSourceSelect.value = 'AUTO';
+        if (cashAppCheckbox) {
+          const cash = selected.getAttribute('data-cashapp');
+          cashAppCheckbox.checked = cash === 'true';
+        }
+        if (paymentSourceRadios && paymentSourceRadios.length) {
+          paymentSourceRadios.forEach((radio) => {
+            radio.checked = radio.value === 'AUTO';
+          });
         }
       };
 

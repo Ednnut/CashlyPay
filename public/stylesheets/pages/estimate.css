@@ -27,6 +27,23 @@ section.section {
   gap: var(--space-xl);
 }
 
+.subscription-hero__branding {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.brand-pill {
+  border-radius: var(--radius-full);
+  padding: 0.35rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--theme-accent);
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+}
+
 .subscription-hero__eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.18em;
@@ -67,6 +84,129 @@ section.section {
   display: block;
   font-size: var(--text-xl);
   font-weight: 600;
+}
+
+.payment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-lg);
+}
+
+.toggle-card {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.toggle-card__label {
+  font-size: var(--text-sm);
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.toggle-card__choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.toggle-card__choices--compact .toggle-option__text strong {
+  font-size: var(--text-sm);
+}
+
+.toggle-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 0.65rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast) var(--transition-ease),
+    transform var(--transition-fast) var(--transition-ease);
+}
+
+.toggle-option input {
+  display: none;
+}
+
+.toggle-option__control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.toggle-option__control::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.toggle-option__control span {
+  display: block;
+}
+
+.toggle-option__control span.icon-lock::before {
+  content: "⚡";
+}
+
+.toggle-option__control span.icon-auto::before {
+  content: "🤖";
+}
+
+.toggle-option__control span.icon-bank::before {
+  content: "🏦";
+}
+
+.toggle-option__control span.icon-mail::before {
+  content: "✉️";
+}
+
+.toggle-option__control span.icon-card::before {
+  content: "💳";
+}
+
+.toggle-option__control span.icon-gift::before {
+  content: "🎁";
+}
+
+.toggle-option__control span.icon-cash-app::before {
+  content: "🅲";
+  font-weight: 700;
+}
+
+.toggle-option input:checked + .toggle-option__control::before {
+  border-color: var(--theme-accent);
+  background: rgba(0, 213, 75, 0.15);
+}
+
+.toggle-option__text strong {
+  display: block;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+}
+
+.toggle-option__text span {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.toggle-option:hover {
+  border-color: rgba(0, 213, 75, 0.6);
+  transform: translateY(-1px);
 }
 
 .wizard {

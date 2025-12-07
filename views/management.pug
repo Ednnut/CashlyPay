@@ -197,10 +197,27 @@ block content
           each item, index in serviceItems
             .service-card
               .service-card__content
-                h4.service-card__title #{item.name}
-                p.service-card__price $#{(item.priceAmount/100).toFixed(2)} #{(item.currency || defaultCurrency)}
+                .service-card__header
+                  .service-card__title-block
+                    span.service-card__eyebrow Service
+                    h4.service-card__title #{item.name}
+                  span.service-card__price $#{(item.priceAmount/100).toFixed(2)} #{(item.currency || defaultCurrency)}
                 if item.description
                   p.service-card__description #{item.description}
+                .service-card__chips
+                  if item.paymentMethods && item.paymentMethods.card !== false
+                    span.chip Card
+                  if item.paymentMethods && item.paymentMethods.bankAccount
+                    span.chip ACH
+                  if item.paymentMethods && item.paymentMethods.squareGiftCard
+                    span.chip Gift card
+                  if item.paymentMethods && item.paymentMethods.cashAppPay
+                    span.chip Cash App
+                  if item.category
+                    span.chip #{item.category}
+                  span.chip #{item.currency || defaultCurrency}
+                if item.paymentMethods && item.paymentMethods.card === false
+                  p.service-card__note Card collection disabled for this service.
               
               form.service-card__action(id=`create-invoice-${index}` action='/invoice/create' method='post')
                 input(type='hidden' name='locationId' value=locationId)
@@ -209,23 +226,47 @@ block content
                 input(type='hidden' name='name' value=item.name)
                 input(type='hidden' name='priceAmount' value=item.priceAmount)
                 input(type='hidden' name='currency' value=item.currency || defaultCurrency)
-                .service-card__options
-                  label.option-pill
-                    input(type='checkbox' name='allowCard' value='true' checked=!(item.paymentMethods && item.paymentMethods.card === false))
-                    span Card/Digital Wallet
-                  label.option-pill
-                    input(type='checkbox' name='allowBank' value='true' checked=item.paymentMethods && item.paymentMethods.bankAccount)
-                    span Bank Transfer
-                  label.option-pill
-                    input(type='checkbox' name='allowGiftCard' value='true' checked=item.paymentMethods && item.paymentMethods.squareGiftCard)
-                    span Gift Card
-                label.service-card__select
-                  span.payment-label Payment Source
-                  select(name='paymentSource')
-                    option(value='AUTO') Auto detect
-                    option(value='CARD_ON_FILE') Charge card on file
-                    option(value='BANK_ON_FILE') Charge bank
-                    option(value='NONE') Manual payment
+                .service-card__payment-grid
+                  .toggle-card
+                    span.toggle-card__label Payment methods
+                    .toggle-card__choices
+                      label.toggle-option
+                        input(type='checkbox' name='allowCard' value='true' checked=!(item.paymentMethods && item.paymentMethods.card === false))
+                        span.toggle-option__control
+                          span.icon-card
+                          span.toggle-option__text
+                            strong Card / Digital Wallet
+                            span charges instantly
+                      label.toggle-option
+                        input(type='checkbox' name='allowBank' value='true' checked=item.paymentMethods && item.paymentMethods.bankAccount)
+                        span.toggle-option__control
+                          span.icon-bank
+                          span.toggle-option__text
+                            strong Bank transfer
+                            span ACH or wire
+                      label.toggle-option
+                        input(type='checkbox' name='allowGiftCard' value='true' checked=item.paymentMethods && item.paymentMethods.squareGiftCard)
+                        span.toggle-option__control
+                          span.icon-gift
+                          span.toggle-option__text
+                            strong Gift card
+                            span Square gift cards
+                      label.toggle-option
+                        input(type='checkbox' name='allowCashApp' value='true' checked=item.paymentMethods && item.paymentMethods.cashAppPay)
+                        span.toggle-option__control
+                          span.icon-cash-app
+                          span.toggle-option__text
+                            strong Cash App Pay
+                            span Wallet checkout
+                  .toggle-card
+                    span.toggle-card__label Payment source
+                    label.service-card__select
+                      span.payment-label Choose preference
+                      select(name='paymentSource')
+                        option(value='AUTO') Auto detect
+                        option(value='CARD_ON_FILE') Charge card on file
+                        option(value='BANK_ON_FILE') Charge bank
+                        option(value='NONE') Manual payment
                 button.button.button-primary(type="submit")
                   svg.icon(viewBox="0 0 20 20")
                     path(d="M4 10h12m-6-6v12" stroke="currentColor" stroke-width="2" stroke-linecap="round")
