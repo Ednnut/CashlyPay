@@ -22,9 +22,9 @@ block content
   - const cardCustomers = customers.filter((customer) => customer.cards && customer.cards.length)
   - const manualCustomers = totalCustomers - cardCustomers.length
   - const lastCustomer = customers[0]
-  - const statusLabel = envStatus?.label || 'Testing'
-  - const statusTone = envStatus?.tone || 'testing'
-  - const primaryCustomerId = lastCustomer?.id
+  - const statusLabel = (envStatus && envStatus.label) || 'Testing'
+  - const statusTone = (envStatus && envStatus.tone) || 'testing'
+  - const primaryCustomerId = lastCustomer && lastCustomer.id
   - const managementHref = primaryCustomerId ? `/management/${locationId}/${primaryCustomerId}` : '/customers/new'
   - const invoiceHref = managementHref
   - const estimateHref = primaryCustomerId ? `/estimate/new/${locationId}/${primaryCustomerId}` : '/customers/new'
@@ -32,11 +32,6 @@ block content
   - const reminderCountValue = typeof reminderCount === 'number' ? reminderCount : 0
   - const profileName = 'Ops Team'
   - const profileInitials = 'OT'
-  - const primaryCustomerId = lastCustomer?.id
-  - const managementHref = primaryCustomerId ? `/management/${locationId}/${primaryCustomerId}` : '/customers/new'
-  - const invoiceHref = managementHref
-  - const estimateHref = primaryCustomerId ? `/estimate/new/${locationId}/${primaryCustomerId}` : '/customers/new'
-  - const subscriptionHref = primaryCustomerId ? `/subscription/new/${locationId}/${primaryCustomerId}` : '/customers/new'
   - const settingsHref = '/admin'
   main.dashboard
     section.hero
@@ -68,6 +63,7 @@ block content
               .profile-dropdown
                 a(href="/customers/new") Account
                 a(href="/admin/reminders") Notifications
+                a(href="/settings") Settings
                 a(href="/customers/new") Sign out
         .hero__content
           span.hero__eyebrow CashlyPay Command Center
@@ -184,55 +180,4 @@ block content
         a.button.button-secondary(href="/admin/reminders") Run Reminder Queue
 
 block append scripts
-  script.
-    document.addEventListener('DOMContentLoaded', function () {
-      const drawer = document.querySelector('.command-drawer');
-      const trigger = document.querySelector('.hero__nav-trigger');
-      const closeBtn = document.querySelector('.command-drawer__close');
-      const profileBtn = document.querySelector('.hero__profile-trigger');
-      const profileDropdown = document.querySelector('.profile-dropdown');
-      const toggleDrawer = (shouldOpen) => {
-        if (!drawer) return;
-        if (shouldOpen) {
-          drawer.classList.add('is-open');
-          document.body.classList.add('drawer-open');
-        } else {
-          drawer.classList.remove('is-open');
-          document.body.classList.remove('drawer-open');
-        }
-      };
-      const toggleProfile = (shouldOpen) => {
-        if (!profileBtn || !profileDropdown) return;
-        profileDropdown.classList.toggle('is-visible', shouldOpen);
-        profileBtn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
-      };
-      trigger?.addEventListener('click', () => toggleDrawer(true));
-      closeBtn?.addEventListener('click', () => toggleDrawer(false));
-      drawer?.addEventListener('click', (event) => {
-        if (event.target === drawer) {
-          toggleDrawer(false);
-        }
-      });
-      profileBtn?.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const isOpen = profileDropdown?.classList.contains('is-visible');
-        toggleProfile(!isOpen);
-      });
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && drawer?.classList.contains('is-open')) {
-          toggleDrawer(false);
-        }
-        if (event.key === 'Escape' && profileDropdown?.classList.contains('is-visible')) {
-          toggleProfile(false);
-        }
-      });
-      document.addEventListener('click', (event) => {
-        if (
-          profileDropdown?.classList.contains('is-visible') &&
-          !profileDropdown.contains(event.target) &&
-          event.target !== profileBtn
-        ) {
-          toggleProfile(false);
-        }
-      });
-    });
+  script(src="/javascripts/dashboard.js" defer)
