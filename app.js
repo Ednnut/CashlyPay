@@ -76,6 +76,9 @@ app.use((req, res, next) => {
 
 app.use("/", routes);
 app.use("/webhooks", webhookRoutes);
+app.get("/settings", (req, res) => {
+  res.redirect("/admin");
+});
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

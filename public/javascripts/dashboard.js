@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   var drawer = document.querySelector(".command-drawer");
+  var sidebarOverlay = document.querySelector(".sidebar-overlay");
   var trigger = document.querySelector(".hero__nav-trigger");
   var closeBtn = document.querySelector(".command-drawer__close");
   var profileBtn = document.querySelector(".hero__profile-trigger");
@@ -24,9 +25,26 @@ document.addEventListener("DOMContentLoaded", function () {
       profileBtn.setAttribute("aria-expanded", "false");
     }
   };
+  var toggleSidebar = function (shouldOpen) {
+    if (window.innerWidth >= 992 && typeof shouldOpen === "undefined") {
+      document.body.classList.toggle("sidebar-collapsed");
+      return;
+    }
+    var isOpen = document.body.classList.contains("sidebar-open");
+    if (shouldOpen === undefined) {
+      shouldOpen = !isOpen;
+    }
+    if (shouldOpen) {
+      document.body.classList.add("sidebar-open");
+    } else {
+      document.body.classList.remove("sidebar-open");
+    }
+  };
+
   if (trigger) {
     trigger.addEventListener("click", function () {
       toggleDrawer(true);
+      toggleSidebar();
     });
   }
   if (closeBtn) {
@@ -39,6 +57,11 @@ document.addEventListener("DOMContentLoaded", function () {
       if (event.target === drawer) {
         toggleDrawer(false);
       }
+    });
+  }
+  if (sidebarOverlay) {
+    sidebarOverlay.addEventListener("click", function () {
+      toggleSidebar(false);
     });
   }
   if (profileBtn) {

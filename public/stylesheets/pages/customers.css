@@ -519,6 +519,99 @@
   margin-top: var(--space-lg);
 }
 
+.hero__ribbon {
+  margin-top: var(--space-md);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.hero__search-bar {
+  flex: 1 1 260px;
+  display: flex;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.15rem;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.hero__search-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  padding: 0.75rem 1rem;
+  font-size: var(--text-base);
+}
+
+.hero__search-bar input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.hero__search-bar button {
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0 1rem;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.hero__quick-actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.hero__quick-actions .button-sm {
+  border-radius: var(--radius-full);
+  padding: 0.4rem 1rem;
+  font-size: var(--text-sm);
+}
+
+.hero__ticker {
+  margin-top: var(--space-md);
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.ticker-track {
+  display: flex;
+  animation: tickerMove 16s linear infinite;
+}
+
+.ticker-item {
+  display: flex;
+  gap: var(--space-xs);
+  padding: 0.6rem 1.2rem;
+  align-items: center;
+  color: var(--text-primary);
+}
+
+.ticker-label {
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.ticker-value {
+  font-weight: 600;
+  font-size: var(--text-base);
+}
+
+@keyframes tickerMove {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
 .hero__metrics {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
