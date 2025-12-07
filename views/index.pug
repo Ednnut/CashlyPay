@@ -29,6 +29,15 @@ block content
   - const invoiceHref = managementHref
   - const estimateHref = primaryCustomerId ? `/estimate/new/${locationId}/${primaryCustomerId}` : '/customers/new'
   - const subscriptionHref = primaryCustomerId ? `/subscription/new/${locationId}/${primaryCustomerId}` : '/customers/new'
+  - const reminderCountValue = typeof reminderCount === 'number' ? reminderCount : 0
+  - const profileName = 'Ops Team'
+  - const profileInitials = 'OT'
+  - const primaryCustomerId = lastCustomer?.id
+  - const managementHref = primaryCustomerId ? `/management/${locationId}/${primaryCustomerId}` : '/customers/new'
+  - const invoiceHref = managementHref
+  - const estimateHref = primaryCustomerId ? `/estimate/new/${locationId}/${primaryCustomerId}` : '/customers/new'
+  - const subscriptionHref = primaryCustomerId ? `/subscription/new/${locationId}/${primaryCustomerId}` : '/customers/new'
+  - const settingsHref = '/admin'
   main.dashboard
     section.hero
       .container
@@ -43,10 +52,23 @@ block content
             .branding-copy
               span.brand-name CashlyPay
               span.brand-tag Finance OS
-          .hero__status-chip(class=`hero__status-chip--${statusTone}`)
-            span.dot
-            span.label #{statusLabel === 'Live' ? 'Live Environment' : 'Testing Environment'}
-            span.meta #{statusLabel === 'Live' ? 'Production data' : 'Sandbox data'}
+          .hero__branding-right
+            .hero__status-chip(class=`hero__status-chip--${statusTone}`)
+              span.dot
+              span.label #{statusLabel === 'Live' ? 'Live Environment' : 'Testing Environment'}
+              span.meta #{statusLabel === 'Live' ? 'Production data' : 'Sandbox data'}
+            .hero__profile
+              button.hero__profile-trigger(type="button" aria-haspopup="true" aria-expanded="false")
+                span.avatar #{profileInitials}
+                span.hero__profile-name #{profileName}
+                svg(viewBox="0 0 24 24" width="20" height="20")
+                  path(d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+                if reminderCountValue > 0
+                  span.hero__badge #{reminderCountValue}
+              .profile-dropdown
+                a(href="/customers/new") Account
+                a(href="/admin/reminders") Notifications
+                a(href="/customers/new") Sign out
         .hero__content
           span.hero__eyebrow CashlyPay Command Center
           h1.hero__title Modern Customer Workspace
@@ -156,7 +178,7 @@ block content
           li: a(href=subscriptionHref) Subscriptions
           li: a(href="/analytics") Analytics
           li: a(href="/admin/reminders") Reminder Queue
-          li: a(href="/admin/reminders") Settings
+          li: a(href=settingsHref) Settings
       .command-drawer__actions
         a.button.button-primary(href=managementHref) Create Invoice
         a.button.button-secondary(href="/admin/reminders") Run Reminder Queue
@@ -167,6 +189,8 @@ block append scripts
       const drawer = document.querySelector('.command-drawer');
       const trigger = document.querySelector('.hero__nav-trigger');
       const closeBtn = document.querySelector('.command-drawer__close');
+      const profileBtn = document.querySelector('.hero__profile-trigger');
+      const profileDropdown = document.querySelector('.profile-dropdown');
       const toggleDrawer = (shouldOpen) => {
         if (!drawer) return;
         if (shouldOpen) {
@@ -177,6 +201,11 @@ block append scripts
           document.body.classList.remove('drawer-open');
         }
       };
+      const toggleProfile = (shouldOpen) => {
+        if (!profileBtn || !profileDropdown) return;
+        profileDropdown.classList.toggle('is-visible', shouldOpen);
+        profileBtn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+      };
       trigger?.addEventListener('click', () => toggleDrawer(true));
       closeBtn?.addEventListener('click', () => toggleDrawer(false));
       drawer?.addEventListener('click', (event) => {
@@ -184,9 +213,26 @@ block append scripts
           toggleDrawer(false);
         }
       });
+      profileBtn?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isOpen = profileDropdown?.classList.contains('is-visible');
+        toggleProfile(!isOpen);
+      });
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && drawer?.classList.contains('is-open')) {
           toggleDrawer(false);
+        }
+        if (event.key === 'Escape' && profileDropdown?.classList.contains('is-visible')) {
+          toggleProfile(false);
+        }
+      });
+      document.addEventListener('click', (event) => {
+        if (
+          profileDropdown?.classList.contains('is-visible') &&
+          !profileDropdown.contains(event.target) &&
+          event.target !== profileBtn
+        ) {
+          toggleProfile(false);
         }
       });
     });

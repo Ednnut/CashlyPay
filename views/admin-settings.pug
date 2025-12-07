@@ -1,0 +1,80 @@
+extends layout
+
+block styles
+  link(rel="stylesheet" href="/stylesheets/pages/analytics.css")
+
+block content
+  .dashboard
+    section.section
+      .section-header
+        h1.page-title Workspace Settings
+        p.text-secondary Configure data sources, automation cadences, feature flags, and integration health.
+
+    section.section
+      h3.section-title Environment Overview
+      if settings
+        .settings-grid
+          .settings-card
+            span.settings-label Environment
+            span.settings-value #{settings.environment.label} (#{settings.environment.squareEnv})
+            span.settings-meta #{settings.environment.lastDeployed}
+          .settings-card
+            span.settings-label Timezone
+            span.settings-value #{settings.environment.timezone}
+            span.settings-meta System default for reminders & scheduling
+          .settings-card
+            span.settings-label Version
+            span.settings-value #{settings.environment.version}
+            span.settings-meta Application build reference
+
+    section.section
+      h3.section-title Integrations
+      if settings && settings.integrations
+        ul.integration-list
+          each integration in settings.integrations
+            li.integration-item(class=`integration-item--${integration.status}`)
+              .integration-status
+                span.status-dot
+                span.integration-name #{integration.name}
+              span.integration-detail #{integration.detail}
+              if integration.status !== 'connected'
+                span.integration-action Configure in .env
+
+    section.section
+      h3.section-title Reminder Cadence
+      if settings && settings.reminderConfig
+        form.settings-form(action='/admin/reminders/run' method='post')
+          .form-row
+            label
+              span.text-secondary Upcoming reminder window (days)
+              input(type='number' name='upcomingDays' value=settings.reminderConfig.upcomingDays min='1')
+            label
+              span.text-secondary Overdue reminder window (days)
+              input(type='number' name='overdueDays' value=settings.reminderConfig.overdueDays min='1')
+          .form-row
+            label
+              span.text-secondary Cadence (minutes)
+              input(type='number' name='cadenceMinutes' value=settings.reminderConfig.cadenceMinutes min='5')
+            label
+              span.text-secondary Timezone
+              input(type='text' name='timezone' value=settings.reminderConfig.timezone)
+          .form-actions
+            button.button.button-secondary(type='submit') Run Queue with current settings
+            a.button.button-ghost(href='/admin/reminders') View Scheduled Jobs
+
+    section.section
+      h3.section-title Feature Flags
+      if settings && settings.featureFlags
+        .feature-flags
+          each flag in settings.featureFlags
+            .feature-flag(class=flag.enabled ? 'feature-flag--on' : 'feature-flag--off')
+              .feature-flag__meta
+                span.feature-flag__name #{flag.label}
+                span.feature-flag__state #{flag.enabled ? 'Enabled' : 'Disabled'}
+              p.feature-flag__description #{flag.description}
+
+    section.section
+      h3.section-title Automation Shortcuts
+      .button-group
+        a.button.button-primary(href="/admin/reminders") Open Reminder Queue
+        a.button.button-secondary(href="/analytics") View Analytics Pulse

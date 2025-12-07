@@ -24,6 +24,7 @@ const uploadRoute = require("./uploads");
 const adminRoute = require("./admin");
 const analyticsRoute = require("./analytics");
 const { customersApi, locationsApi } = require("../util/square-client");
+const reminderQueue = require("../util/reminder-queue");
 
 const router = express.Router();
 
@@ -65,15 +66,24 @@ router.get("/", async (req, res, next) => {
     );
     const displayCustomers =
       customersWithEmail.length > 0 ? customersWithEmail : customers;
+    const reminderCount = reminderQueue.listReminders().length;
 
     // Render the customer list homepage
-    const squareEnv = (process.env.SQUARE_ENVIRONMENT || process.env.NODE_ENV || "sandbox").toLowerCase();
-    const envStatus = squareEnv === "production" ? { label: "Live", tone: "live" } : { label: "Testing", tone: "testing" };
+    const squareEnv = (
+      process.env.SQUARE_ENVIRONMENT ||
+      process.env.NODE_ENV ||
+      "sandbox"
+    ).toLowerCase();
+    const envStatus =
+      squareEnv === "production"
+        ? { label: "Live", tone: "live" }
+        : { label: "Testing", tone: "testing" };
 
     res.render("index", {
       customers: displayCustomers,
       locationId: location.id, // use the main location as the default
       envStatus,
+      reminderCount,
     });
   } catch (error) {
     next(error);
