@@ -1,14 +1,22 @@
 extends layout
 
+block styles
+  link(rel="stylesheet" href="/stylesheets/pages/reminders.css")
+
 block content
   .dashboard
-    header.section
+    header.section.panel
       .section-header
-        h1.page-title Reminder Queue
+        .section-header__left
+          a.button.button-ghost(href="/")
+            svg(width="18" height="18" viewBox="0 0 20 20" fill="none")
+              path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+            span Dashboard
+          h1.page-title Reminder Queue
         form(action="/admin/reminders/run" method="post")
           button.button.button-secondary(type="submit") Process Now
 
-    section.section
+    section.section.panel
       if reminders && reminders.length
         table.data-table
           thead
@@ -20,9 +28,13 @@ block content
           tbody
             each reminder in reminders
               tr
-                td #{reminder.type}
+                td
+                  span.reminder-status(class=`reminder-status--${reminder.type === 'UPCOMING_DUE' ? 'upcoming' : 'overdue'}`)
+                    | #{reminder.type.replace('_', ' ')}
                 td #{reminder.invoiceId}
-                td #{reminder.runAt}
+                td #{new Date(reminder.runAt).toLocaleString()}
                 td #{reminder.attempts || 0}
+        .table-footer
+          a.button.button-ghost(href="/admin/reminders") Refresh List
       else
         p.text-secondary No reminders scheduled.

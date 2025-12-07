@@ -35,6 +35,8 @@ html(lang="en" class="dark")
       script(defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js")
   
   body.dark
+    a.skip-link(href="#dashboardMain") Skip to dashboard
+    #sr-announcer.sr-only(aria-live="assertive" aria-atomic="true")
     include ../public/images/sprites.svg
     
     //- Sidebar
@@ -79,7 +81,7 @@ html(lang="en" class="dark")
     .sidebar-overlay
     //- Main Content
     main.content
-      .container
+      .container#dashboardMain
         block content
     
     //- Footer

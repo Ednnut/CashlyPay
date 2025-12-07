@@ -35,6 +35,8 @@ Licensed under the Apache License, Version 2.0
 /* Page-specific Imports */
 @import "pages/invoice.css";
 @import "pages/management.css";
+@import "pages/estimate.css";
+@import "pages/reminders.css";
 
 /* Utility Classes */
 .flex {

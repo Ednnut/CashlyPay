@@ -108,5 +108,27 @@
     "type": "OVERDUE_CHECK",
     "runAt": "2025-12-14T00:00:00.000Z",
     "message": "Invoice 000005 is overdue."
+  },
+  {
+    "id": "1765084021971-h7md8k1yg1d",
+    "createdAt": "2025-12-07T05:07:01.971Z",
+    "attempts": 0,
+    "invoiceId": "inv:0-ChDe1bNnZGYO34w68Qk4xsfpEIgL",
+    "customerId": "68S91TXZC100BT30AVTQG42374",
+    "locationId": "LZCVD5WWKQF0Y",
+    "type": "UPCOMING_DUE",
+    "runAt": "2025-12-13T00:00:00.000Z",
+    "message": "Invoice 000006 is due soon."
+  },
+  {
+    "id": "1765084021972-extjq7iyq9",
+    "createdAt": "2025-12-07T05:07:01.972Z",
+    "attempts": 0,
+    "invoiceId": "inv:0-ChDe1bNnZGYO34w68Qk4xsfpEIgL",
+    "customerId": "68S91TXZC100BT30AVTQG42374",
+    "locationId": "LZCVD5WWKQF0Y",
+    "type": "OVERDUE_CHECK",
+    "runAt": "2025-12-15T00:00:00.000Z",
+    "message": "Invoice 000006 is overdue."
   }
 ]

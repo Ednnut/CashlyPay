@@ -33,12 +33,20 @@ block content
   - const profileName = 'Ops Team'
   - const profileInitials = 'OT'
   - const settingsHref = '/admin'
-  main.dashboard
+  - const safeTickerStats = tickerStats || { upcomingReminders: 0, overdueReminders: 0 }
+  - const invoiceTicker = invoiceStats || { overdueInvoiceCount: 0, scheduledInvoiceCount: 0 }
+  - const tickerItems = []
+  - tickerItems.push({ label: statusLabel === 'Live' ? 'Next settlement ETA' : 'Next sandbox sync', value: statusLabel === 'Live' ? '2h 15m' : 'Sandbox sync in 2h' })
+  - tickerItems.push({ label: 'Upcoming reminders', value: safeTickerStats.upcomingReminders })
+  - tickerItems.push({ label: 'Overdue reminders', value: safeTickerStats.overdueReminders })
+  - tickerItems.push({ label: 'Overdue invoices', value: invoiceTicker.overdueInvoiceCount })
+  - tickerItems.push({ label: 'Scheduled invoices', value: invoiceTicker.scheduledInvoiceCount })
+  main.dashboard(data-reminders=reminderCountValue data-overdue=invoiceTicker.overdueInvoiceCount)
     section.hero
       .container
         .hero__branding-bar
           .hero__branding-left
-            button.hero__nav-trigger(type="button" aria-label="Open navigation panel")
+            button.hero__nav-trigger(type="button" aria-label="Open navigation panel" aria-controls="commandDrawer")
               span.bar
               span.bar
               span.bar
@@ -53,35 +61,35 @@ block content
               span.label #{statusLabel === 'Live' ? 'Live Environment' : 'Testing Environment'}
               span.meta #{statusLabel === 'Live' ? 'Production data' : 'Sandbox data'}
             .hero__profile
-              button.hero__profile-trigger(type="button" aria-haspopup="true" aria-expanded="false")
+              button.hero__profile-trigger(type="button" aria-haspopup="true" aria-expanded="false" aria-controls="heroProfileMenu")
                 span.avatar #{profileInitials}
                 span.hero__profile-name #{profileName}
                 svg(viewBox="0 0 24 24" width="20" height="20")
                   path(d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
                 if reminderCountValue > 0
-                  span.hero__badge #{reminderCountValue}
-              .profile-dropdown
-                a(href="/customers/new") Account
-                a(href="/admin/reminders") Notifications
-                a(href="/settings") Settings
-                a(href="/customers/new") Sign out
+                  span.hero__badge(aria-hidden="true") #{reminderCountValue}
+              .profile-dropdown(role="menu" id="heroProfileMenu")
+                a(role="menuitem" href="/customers/new") Account
+                a(role="menuitem" href="/admin/reminders") Notifications
+                a(role="menuitem" href="/settings") Settings
+                a(role="menuitem" href="/customers/new") Sign out
         .hero__content
           span.hero__eyebrow CashlyPay Command Center
           h1.hero__title Modern Customer Workspace
           p.hero__subtitle Manage clients, invoices, reminders, and analytics from a single hub designed for finance teams on the go.
           .hero__ribbon
             form.hero__search-bar(action="/management" method="get")
-              input(type="text" name="q" placeholder="Quick search customers, invoices, or services")
-              button(type="submit")
+              input(type="text" name="q" aria-label="Search customers, invoices, or services" placeholder="Quick search customers, invoices, or services" autocomplete="off")
+              button(type="submit" aria-label="Submit search")
                 svg(width="18" height="18" viewBox="0 0 24 24" fill="none")
                   path(d="M10 4a6 6 0 106 6 6 6 0 00-6-6zm11 16l-4.5-4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
             .hero__quick-actions
               a.button.button-sm(href="/customers/new") Add Customer
               a.button.button-sm(href="/management") Add Service
               a.button.button-sm(href="/invoice/create") Create Invoice
-          .hero__ticker
+          .hero__ticker(role="status" aria-live="polite")
             .ticker-track
-              each item in [{ label: 'Next settlement', value: statusLabel === 'Live' ? 'ETA 2:15pm' : 'Sandbox sync in 2h' }, { label: 'Invoices overdue', value: manualCustomers }, { label: 'Deposits scheduled', value: cardCustomers.length }]
+              each item in tickerItems
                 .ticker-item
                   span.ticker-label #{item.label}
                   span.ticker-value #{item.value}
@@ -171,7 +179,7 @@ block content
         p Create a customer to unlock invoices, subscriptions, and analytics.
         a.button.button-primary(href="/customers/new") Create your first customer
 
-  .command-drawer
+  .command-drawer(id="commandDrawer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Navigation drawer")
     .command-drawer__panel
       .command-drawer__header
         .logo-mark
@@ -194,6 +202,11 @@ block content
       .command-drawer__actions
         a.button.button-primary(href=managementHref) Create Invoice
         a.button.button-secondary(href="/admin/reminders") Run Reminder Queue
+
+  .reminder-toast(data-toast role="status" aria-live="polite")
+    span.toast-dot
+    span.toast-message Reminder queue synced.
+    button.toast-close(type="button" aria-label="Dismiss notification") ×
 
 block append scripts
   script(src="/javascripts/dashboard.js" defer)

@@ -23,20 +23,31 @@ block content
   - const totalEstimates = estimates ? estimates.length : 0
   - const totalSubscriptions = subscriptions ? subscriptions.length : 0
   .dashboard
-    section.hero
-      .section-header
-        .hero-left
+    section.customer-hero
+      .customer-hero__layout
+        .customer-hero__copy
           a.button.button-icon(href="/")
             svg(width="20" height="20" viewBox="0 0 20 20" fill="none")
               path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
             span Back to Customers
-          h1.page-title Customer Command Center
-          p.page-subtitle End-to-end view of this customer: invoices, estimates, subscriptions, and payment posture.
-        .hero-actions
-          a.button.button-primary(href=`/estimate/new/${locationId}/${customer.id}`) New Estimate
-          a.button.button-secondary(href=`/subscription/new/${locationId}/${customer.id}`) New Subscription
-          a.button.button-ghost(href="/analytics") Analytics
-      .metric-grid
+          span.customer-hero__eyebrow CashlyPay Customer Hub
+          h1.customer-hero__title Command Center for #{customer.givenName}
+          p.customer-hero__subtitle End-to-end view of invoices, subscriptions, reminders, and payment posture.
+          .customer-hero__actions
+            a.action-pill(href=`/estimate/new/${locationId}/${customer.id}`)
+              span Create Estimate
+            a.action-pill(href=`/subscription/new/${locationId}/${customer.id}`)
+              span Launch Subscription
+            a.action-pill(href="/analytics")
+              span View Analytics
+        .customer-hero__meta
+          span.status-chip(class=customer.cards && customer.cards.length ? 'status-chip--success' : 'status-chip--warning')
+            span.dot
+            span.label #{customer.cards && customer.cards.length ? 'Card on file' : 'Manual payment'}
+          span.status-chip(class=overdueInvoices ? 'status-chip--warning' : 'status-chip--success')
+            span.dot
+            span.label #{overdueInvoices} Overdue invoices
+      .customer-hero__metrics
         .metric-card
           span.metric-label Invoices
           span.metric-value #{totalInvoices}
@@ -59,7 +70,7 @@ block content
             span.metric-trend Add payment method
 
     //- Customer Info
-    .customer-card.mb-xl
+    .panel.customer-card.mb-xl
       .customer-header
         div
           h2.customer-name #{customer.givenName} #{customer.familyName}
@@ -70,7 +81,7 @@ block content
               span #{customer.emailAddress}
     
     //- Estimate actions
-    section.section
+    section.section.panel
       .section-header
         h3.section-title Estimates
         a.button.button-primary(href=`/estimate/new/${locationId}/${customer.id}`)
@@ -121,7 +132,7 @@ block content
           p.empty-state__message Build a scoped estimate before sending an invoice.
 
     //- Subscriptions Section
-    section.section
+    section.section.panel
       .section-header
         h3.section-title Subscriptions
         a.button.button-primary(href=`/subscription/new/${locationId}/${customer.id}`)
@@ -160,7 +171,7 @@ block content
           p.empty-state__message Set up a recurring plan with flexible payment methods.
 
     //- Services Section
-    section.section
+    section.section.panel
       .section-header
         h3.section-title Available Services
         form.service-filters(method="get" action=`/management/${locationId}/${customer.id}`)
@@ -231,7 +242,7 @@ block content
             span Add First Service
 
     //- Invoices Section
-    section.section
+    section.section.panel
       - const serviceFilterQuery = `q=${encodeURIComponent(serviceFilters.q)}&category=${encodeURIComponent(serviceFilters.category)}`
       .section-header
         h3.section-title Recent Invoices

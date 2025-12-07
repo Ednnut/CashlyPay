@@ -23,7 +23,11 @@ const customerRoute = require("./customer");
 const uploadRoute = require("./uploads");
 const adminRoute = require("./admin");
 const analyticsRoute = require("./analytics");
-const { customersApi, locationsApi } = require("../util/square-client");
+const {
+  customersApi,
+  locationsApi,
+  invoicesApi,
+} = require("../util/square-client");
 const reminderQueue = require("../util/reminder-queue");
 
 const router = express.Router();
@@ -56,6 +60,33 @@ router.get("/", async (req, res, next) => {
     const {
       result: { location },
     } = await locationsApi.retrieveLocation("main");
+
+    let overdueInvoiceCount = 0;
+    let scheduledInvoiceCount = 0;
+    try {
+      const {
+        result: { invoices: fetchedInvoices = [] },
+      } = await invoicesApi.listInvoices(location.id);
+      fetchedInvoices.forEach((invoice) => {
+        switch (invoice.status) {
+          case "OVERDUE":
+            overdueInvoiceCount += 1;
+            break;
+          case "SCHEDULED":
+          case "UNPAID":
+            scheduledInvoiceCount += 1;
+            break;
+          default:
+            break;
+        }
+      });
+    } catch (invoiceError) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        "[Home] Unable to pull invoice stats for ticker",
+        invoiceError.message,
+      );
+    }
     // Retrieves customers for this current merchant
     let {
       result: { customers },
@@ -66,7 +97,14 @@ router.get("/", async (req, res, next) => {
     );
     const displayCustomers =
       customersWithEmail.length > 0 ? customersWithEmail : customers;
-    const reminderCount = reminderQueue.listReminders().length;
+    const reminderSnapshots = reminderQueue.listReminders();
+    const reminderCount = reminderSnapshots.length;
+    const upcomingReminders = reminderSnapshots.filter(
+      (item) => item.type === "UPCOMING_DUE",
+    ).length;
+    const overdueReminders = reminderSnapshots.filter(
+      (item) => item.type === "OVERDUE_CHECK",
+    ).length;
 
     // Render the customer list homepage
     const squareEnv = (
@@ -84,6 +122,14 @@ router.get("/", async (req, res, next) => {
       locationId: location.id, // use the main location as the default
       envStatus,
       reminderCount,
+      invoiceStats: {
+        overdueInvoiceCount,
+        scheduledInvoiceCount,
+      },
+      tickerStats: {
+        upcomingReminders,
+        overdueReminders,
+      },
     });
   } catch (error) {
     next(error);
