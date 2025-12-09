@@ -23,6 +23,7 @@ const customerRoute = require("./customer");
 const uploadRoute = require("./uploads");
 const adminRoute = require("./admin");
 const analyticsRoute = require("./analytics");
+const catalogRoute = require("./catalog");
 const {
   customersApi,
   locationsApi,
@@ -47,6 +48,7 @@ router.use("/customers", customerRoute);
 router.use("/uploads", uploadRoute);
 router.use("/admin", adminRoute);
 router.use("/analytics", analyticsRoute);
+router.use("/catalog", catalogRoute);
 
 /**
  * Matches: GET /

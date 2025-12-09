@@ -47,6 +47,15 @@ block content
           span.value #{metrics.reminderBacklog}
           div.sparkline.sparkline--backlog
           span.text-secondary Scheduled jobs pending
+        .analytics-card
+          span.label Milestone Pipeline
+          span.value $#{(metrics.milestoneTotal/100).toFixed(2)}
+          div.sparkline.sparkline--milestones
+          if metrics.milestoneBuckets && metrics.milestoneBuckets.length
+            span.text-secondary
+              = metrics.milestoneBuckets.map((bucket) => `${bucket.status}: ${bucket.count}`).join(' · ')
+          else
+            span.text-secondary Scheduled stages
 
     section.section.panel
       h3.section-title Recent Activity
@@ -63,3 +72,23 @@ block content
                 p.text-secondary No payload
       else
         p.text-secondary No activity logged yet.
+
+    section.section.panel
+      h3.section-title Upcoming Milestones
+      if upcomingMilestones && upcomingMilestones.length
+        table.milestone-table
+          thead
+            tr
+              th Label
+              th Invoice
+              th Due date
+              th Amount
+          tbody
+            each milestone in upcomingMilestones
+              tr
+                td #{milestone.label}
+                td ##{milestone.invoiceId ? milestone.invoiceId.slice(-6) : '—'}
+                td= milestone.dueDate || 'No date'
+                td $#{(milestone.amount/100).toFixed(2)}
+      else
+        p.text-secondary No upcoming milestones scheduled.

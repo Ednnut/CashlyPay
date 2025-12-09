@@ -1,6 +1,7 @@
 const express = require("express");
 const activityStore = require("../util/activity-store");
 const reminderQueue = require("../util/reminder-queue");
+const milestoneStore = require("../util/milestone-store");
 
 const router = express.Router();
 
@@ -31,14 +32,19 @@ router.get("/", (req, res) => {
   ).length;
   const reminderBacklog = reminderQueue.listReminders().length;
   const recentActivities = filtered.slice(-10).reverse();
+  const milestoneMetrics = milestoneStore.metrics();
+  const upcomingMilestones = milestoneStore.listUpcoming(5);
 
   res.render("analytics", {
     metrics: {
       totalEvents: filtered.length,
       totalReminders,
       reminderBacklog,
+      milestoneTotal: milestoneMetrics.totalAmount,
+      milestoneBuckets: milestoneMetrics.totals,
     },
     recentActivities,
+    upcomingMilestones,
     filters: {
       type,
       range: rangeKey,

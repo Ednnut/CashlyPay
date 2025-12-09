@@ -67,6 +67,9 @@ html(lang="en" class="dark")
         a.nav-item(href="/management" class=(currentPath && currentPath.startsWith('/management') ? 'active' : ''))
           svg: use(href="#icon-invoice")
           span Customers
+        a.nav-item(href="/catalog" class=(currentPath && currentPath.startsWith('/catalog') ? 'active' : ''))
+          svg: use(href="#icon-dashboard")
+          span Services
         a.nav-item(href="/analytics" class=(currentPath && currentPath.startsWith('/analytics') ? 'active' : ''))
           svg: use(href="#icon-dashboard")
           span Analytics

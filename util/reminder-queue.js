@@ -103,6 +103,44 @@ const scheduleFromInvoice = (invoice) => {
   });
 };
 
+const scheduleMilestoneReminders = (invoice, milestones = []) => {
+  if (!invoice || !Array.isArray(milestones)) return;
+  milestones.forEach((milestone) => {
+    if (!milestone.dueDate) return;
+    const dueDate = new Date(milestone.dueDate);
+    if (Number.isNaN(dueDate.getTime())) return;
+    const reminderDate = new Date(dueDate);
+    reminderDate.setDate(dueDate.getDate() - 1);
+    scheduleReminder({
+      invoiceId: invoice.id,
+      customerId: invoice.primaryRecipient?.customerId,
+      locationId: invoice.locationId,
+      type: "MILESTONE_UPCOMING",
+      runAt: reminderDate.toISOString(),
+      message: `${milestone.label} milestone is due soon.`,
+      milestone: {
+        label: milestone.label,
+        amount: milestone.amount,
+      },
+    });
+
+    const overdueDate = new Date(dueDate);
+    overdueDate.setDate(dueDate.getDate() + 1);
+    scheduleReminder({
+      invoiceId: invoice.id,
+      customerId: invoice.primaryRecipient?.customerId,
+      locationId: invoice.locationId,
+      type: "MILESTONE_OVERDUE",
+      runAt: overdueDate.toISOString(),
+      message: `${milestone.label} milestone is overdue.`,
+      milestone: {
+        label: milestone.label,
+        amount: milestone.amount,
+      },
+    });
+  });
+};
+
 const processReminders = () => {
   try {
     const reminders = readReminders();
@@ -138,6 +176,7 @@ setInterval(processReminders, PROCESS_INTERVAL_MS);
 module.exports = {
   scheduleReminder,
   scheduleFromInvoice,
+  scheduleMilestones: scheduleMilestoneReminders,
   listReminders: readReminders,
   runNow: processReminders,
 };

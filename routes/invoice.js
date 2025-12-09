@@ -22,10 +22,13 @@ const {
   ordersApi,
   invoicesApi,
   locationsApi,
+  customersApi,
 } = require("../util/square-client");
 const estimateStore = require("../util/estimate-store");
 const reminderQueue = require("../util/reminder-queue");
 const activityStore = require("../util/activity-store");
+const milestoneStore = require("../util/milestone-store");
+const serviceStore = require("../util/service-store");
 
 const router = express.Router();
 
@@ -79,6 +82,30 @@ const convertEstimateSchema = Joi.object({
   customerId: Joi.string().required(),
   locationId: Joi.string().required(),
   idempotencyKey: Joi.string().trim().min(10).max(64).required(),
+});
+
+const milestoneItemSchema = Joi.object({
+  label: Joi.string().trim().required(),
+  amount: Joi.number().integer().positive().required(),
+  currency: Joi.string().trim().uppercase().length(3).required(),
+  dueDate: Joi.string().optional().allow("", null),
+  paymentSource: Joi.string()
+    .valid("AUTO", "CARD_ON_FILE", "BANK_ON_FILE", "NONE")
+    .default("AUTO"),
+  allowCard: Joi.boolean().default(true),
+  allowBank: Joi.boolean().default(false),
+  allowGiftCard: Joi.boolean().default(true),
+  allowCashApp: Joi.boolean().default(false),
+});
+
+const milestoneInvoiceSchema = Joi.object({
+  customerId: Joi.string().trim().required(),
+  locationId: Joi.string().trim().required(),
+  idempotencyKey: Joi.string().trim().min(10).max(64).required(),
+  serviceName: Joi.string().trim().required(),
+  currency: Joi.string().trim().uppercase().length(3).required(),
+  notes: Joi.string().allow("", null),
+  milestones: Joi.array().items(milestoneItemSchema).min(2).required(),
 });
 
 const validateRequest = (schema, payload) => {
@@ -208,6 +235,111 @@ const buildCustomFieldsFromEstimate = (estimate) => {
   return customFields;
 };
 
+const buildDefaultMilestonePlan = (totalAmount, currency) => {
+  if (!totalAmount) {
+    return [
+      {
+        label: "Mobilization",
+        amount: 0,
+        currency,
+        allowCard: true,
+        allowGiftCard: true,
+      },
+    ];
+  }
+  const template = [
+    { label: "Mobilization", percentage: 0.3 },
+    { label: "Progress Draw", percentage: 0.5 },
+    { label: "Retention", percentage: 0.2 },
+  ];
+  let remaining = totalAmount;
+  return template.map((stage, index) => {
+    let amount = Math.round(totalAmount * stage.percentage);
+    if (index === template.length - 1) {
+      amount = remaining;
+    }
+    remaining -= amount;
+    return {
+      label: stage.label,
+      amount,
+      currency,
+      allowCard: true,
+      allowGiftCard: true,
+    };
+  });
+};
+
+const normalizeDateOnly = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().split("T")[0];
+};
+
+const parseMilestonePayload = (rawMilestones) => {
+  if (Array.isArray(rawMilestones)) return rawMilestones;
+  if (typeof rawMilestones === "string") {
+    try {
+      const parsed = JSON.parse(rawMilestones);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (error) {
+      return [];
+    }
+  }
+  return [];
+};
+
+const aggregatePaymentMethods = (milestones) => {
+  return {
+    allowCard: milestones.some((mile) => mile.allowCard !== false),
+    allowBank: milestones.some((mile) => mile.allowBank),
+    allowGiftCard: milestones.some((mile) => mile.allowGiftCard !== false),
+    allowCashApp: milestones.some((mile) => mile.allowCashApp),
+  };
+};
+
+const resolveAutomaticSource = (requestedSource, cards) => {
+  if (requestedSource && requestedSource !== "AUTO") return requestedSource;
+  if (cards && cards.length) {
+    return "CARD_ON_FILE";
+  }
+  return "NONE";
+};
+
+const buildPaymentRequestsFromMilestones = (milestones, cards) => {
+  return milestones.map((milestone, index) => {
+    const requestType =
+      index === 0
+        ? "DEPOSIT"
+        : index === milestones.length - 1
+          ? "BALANCE"
+          : "INSTALLMENT";
+    const automaticPaymentSource = resolveAutomaticSource(
+      milestone.paymentSource,
+      cards,
+    );
+    const request = {
+      requestType,
+      dueDate: normalizeDateOnly(milestone.dueDate),
+      amountMoney: {
+        amount: milestone.amount,
+        currency: milestone.currency,
+      },
+      reminders: [
+        {
+          message: `${milestone.label} payment due soon`,
+          relativeScheduledDays: -1,
+        },
+      ],
+      automaticPaymentSource,
+    };
+    if (automaticPaymentSource === "CARD_ON_FILE" && cards?.length) {
+      request.cardId = cards[0].id;
+    }
+    return request;
+  });
+};
+
 /**
  * Matches: GET /invoice/view/:locationId/:customerId/:invoiceId
  *
@@ -289,6 +421,49 @@ router.get(
         formatDate,
         idempotencyKey: crypto.randomUUID(),
         activities,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+router.get(
+  "/milestones/new/:locationId/:customerId",
+  async (req, res, next) => {
+    try {
+      const { locationId, customerId } = req.params;
+      const services = serviceStore.list();
+      const selectedService =
+        services.find((svc) => svc.id === req.query.serviceId) || services[0];
+      const [
+        {
+          result: { customer },
+        },
+        {
+          result: { location },
+        },
+      ] = await Promise.all([
+        customersApi.retrieveCustomer(customerId),
+        locationsApi.retrieveLocation(locationId),
+      ]);
+      const currency = selectedService?.currency || location.currency || "USD";
+      const defaultPlan = buildDefaultMilestonePlan(
+        selectedService?.priceAmount || 0,
+        currency,
+      ).map((milestone, index) => ({
+        ...milestone,
+        dueDate: normalizeDateOnly(
+          new Date(Date.now() + (index + 1) * 7 * 24 * 60 * 60 * 1000),
+        ),
+      }));
+      res.render("invoice/milestones", {
+        customer,
+        location,
+        services,
+        selectedService,
+        milestonePlan: defaultPlan,
+        idempotencyKey: crypto.randomUUID(),
       });
     } catch (error) {
       next(error);
@@ -514,6 +689,153 @@ router.post("/create", async (req, res, next) => {
     }
     reminderQueue.scheduleFromInvoice(invoice);
     res.redirect(`view/${locationId}/${customerId}/${invoice.id}`);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/create-milestones", async (req, res, next) => {
+  const rawMilestones = parseMilestonePayload(
+    req.body.milestones || req.body.milestonesJson,
+  );
+  let payload;
+  try {
+    payload = validateRequest(milestoneInvoiceSchema, {
+      ...req.body,
+      milestones: rawMilestones,
+    });
+  } catch (validationError) {
+    return next(validationError);
+  }
+
+  try {
+    const milestones = payload.milestones.map((milestone, index) => ({
+      ...milestone,
+      dueDate:
+        normalizeDateOnly(milestone.dueDate) ||
+        normalizeDateOnly(
+          new Date(Date.now() + (index + 1) * 7 * 24 * 60 * 60 * 1000),
+        ),
+    }));
+
+    const totalAmount = milestones.reduce(
+      (sum, milestone) => sum + milestone.amount,
+      0,
+    );
+    if (totalAmount <= 0) {
+      const error = new Error("Milestones total must be greater than zero");
+      error.status = 400;
+      throw error;
+    }
+
+    const {
+      result: { cards },
+    } = await cardsApi.listCards(undefined, payload.customerId);
+    const locationResponse = await locationsApi.retrieveLocation(
+      payload.locationId,
+    );
+    const currency =
+      payload.currency || locationResponse.result.location.currency;
+    milestones.forEach((milestone) => {
+      if (milestone.currency !== currency) {
+        throw new Error("All milestones must share the same currency");
+      }
+    });
+
+    const orderRequest = {
+      order: {
+        locationId: payload.locationId,
+        customerId: payload.customerId,
+        lineItems: milestones.map((milestone) => ({
+          name: `${payload.serviceName} - ${milestone.label}`,
+          quantity: "1",
+          basePriceMoney: {
+            amount: milestone.amount,
+            currency,
+          },
+        })),
+      },
+      idempotencyKey: payload.idempotencyKey,
+    };
+
+    const {
+      result: { order },
+    } = await ordersApi.createOrder(orderRequest);
+
+    const paymentRequests = buildPaymentRequestsFromMilestones(
+      milestones,
+      cards,
+    );
+    const acceptedPayments = aggregatePaymentMethods(milestones);
+
+    const requestBody = {
+      idempotencyKey: payload.idempotencyKey,
+      invoice: {
+        deliveryMethod: "EMAIL",
+        orderId: order.id,
+        title: `${payload.serviceName} Milestone Plan`,
+        description:
+          payload.notes ||
+          `${milestones.length} payment stages scheduled via Cashly.`,
+        primaryRecipient: {
+          customerId: payload.customerId,
+        },
+        paymentRequests,
+        acceptedPaymentMethods: {
+          bankAccount: acceptedPayments.allowBank,
+          squareGiftCard: acceptedPayments.allowGiftCard,
+          card: acceptedPayments.allowCard,
+          cashAppPay: acceptedPayments.allowCashApp,
+        },
+      },
+    };
+
+    let invoice;
+    try {
+      const invoiceResponse = await invoicesApi.createInvoice(requestBody);
+      invoice = invoiceResponse.result.invoice;
+    } catch (error) {
+      if (error?.errors?.[0]?.code === MERCHANT_SUBSCRIPTION_NOT_FOUND_CODE) {
+        const fallbackBody = JSON.parse(JSON.stringify(requestBody));
+        fallbackBody.invoice.paymentRequests =
+          fallbackBody.invoice.paymentRequests.map((request) => ({
+            ...request,
+            requestType: "BALANCE",
+          }));
+        const invoiceResponse = await invoicesApi.createInvoice(fallbackBody);
+        invoice = invoiceResponse.result.invoice;
+      } else {
+        throw error;
+      }
+    }
+
+    milestoneStore.addMilestones(
+      invoice.id,
+      milestones.map((milestone) => ({
+        ...milestone,
+        allowCard: milestone.allowCard !== false,
+        allowBank: !!milestone.allowBank,
+        allowGiftCard: milestone.allowGiftCard !== false,
+        allowCashApp: !!milestone.allowCashApp,
+      })),
+    );
+    reminderQueue.scheduleFromInvoice(invoice);
+    reminderQueue.scheduleMilestones(invoice, milestones);
+    activityStore.addEvent({
+      invoiceId: invoice.id,
+      type: "MILESTONE_PLAN_CREATED",
+      payload: {
+        stages: milestones.map((milestone) => ({
+          label: milestone.label,
+          amount: milestone.amount,
+          dueDate: milestone.dueDate,
+        })),
+      },
+    });
+
+    res.redirect(
+      `view/${payload.locationId}/${payload.customerId}/${invoice.id}`,
+    );
   } catch (error) {
     next(error);
   }

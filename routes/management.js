@@ -24,6 +24,7 @@ const {
 const serviceStore = require("../util/service-store");
 const estimateStore = require("../util/estimate-store");
 const subscriptionStore = require("../util/subscription-store");
+const milestoneStore = require("../util/milestone-store");
 
 const router = express.Router();
 
@@ -135,12 +136,17 @@ router.get("/:locationId/:customerId", async (req, res, next) => {
       });
     }
 
+    const milestonePlans = milestoneStore.listByInvoiceIds(
+      filteredInvoices.map((invoice) => invoice.id),
+    );
+
     // Render the invoice management page
     res.render("management", {
       locationId,
       serviceItems,
       customer,
       invoices: filteredInvoices,
+      milestonePlans,
       estimates,
       subscriptions,
       idempotencyKey: crypto.randomUUID(),
