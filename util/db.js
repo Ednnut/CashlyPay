@@ -147,4 +147,39 @@ db.prepare(
 `,
 ).run();
 
+db.prepare(
+  `
+  CREATE TABLE IF NOT EXISTS payout_beneficiaries (
+    id TEXT PRIMARY KEY,
+    customer_id TEXT,
+    display_name TEXT,
+    rail TEXT NOT NULL,
+    details TEXT NOT NULL,
+    status TEXT DEFAULT 'active',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`,
+).run();
+
+db.prepare(
+  `
+  CREATE TABLE IF NOT EXISTS payouts (
+    id TEXT PRIMARY KEY,
+    beneficiary_id TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    currency TEXT NOT NULL,
+    rail TEXT NOT NULL,
+    status TEXT NOT NULL,
+    provider_reference TEXT,
+    error_message TEXT,
+    idempotency_key TEXT UNIQUE,
+    metadata TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(beneficiary_id) REFERENCES payout_beneficiaries(id)
+  )
+`,
+).run();
+
 module.exports = db;

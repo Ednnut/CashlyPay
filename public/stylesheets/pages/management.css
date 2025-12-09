@@ -797,6 +797,29 @@
   font-weight: 600;
 }
 
+.stack-form {
+  display: grid;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.stack-form label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  font-size: var(--text-sm);
+}
+
+.stack-form input,
+.stack-form textarea,
+.stack-form select {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.6rem 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+}
+
 .milestone-plan {
   list-style: none;
   padding: 0.5rem 0 0;

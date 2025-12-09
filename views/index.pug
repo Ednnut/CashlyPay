@@ -86,6 +86,7 @@ block content
             .hero__quick-actions
               a.button.button-sm(href="/management") Add Service
               a.button.button-sm(href="/invoice/create") Create Invoice
+              a.button.button-sm(href="/payouts/console") Payout Console
           .hero__ticker(role="status" aria-live="polite")
             .ticker-track
               each item in tickerItems
@@ -136,6 +137,14 @@ block content
                 span.status-chip.status-chip--warning Manual pay (#{manualCustomers})
               li
                 span.status-chip.status-chip--neutral All Customers (#{totalCustomers})
+          .feature-card
+            h3 Payout Pulse
+            if payoutStats
+              p.text-secondary #{payoutStats.total} payout events logged
+              p.feature-highlight #{payoutStats.pending} pending via #{payoutStats.lastRail || 'rail TBD'}
+            else
+              p.text-secondary No payouts initiated yet.
+            a.button.button-secondary(href="/payouts/console") Manage payouts
 
     section.customers-section
       .container

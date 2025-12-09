@@ -24,12 +24,14 @@ const uploadRoute = require("./uploads");
 const adminRoute = require("./admin");
 const analyticsRoute = require("./analytics");
 const catalogRoute = require("./catalog");
+const payoutRoute = require("./payout");
 const {
   customersApi,
   locationsApi,
   invoicesApi,
 } = require("../util/square-client");
 const reminderQueue = require("../util/reminder-queue");
+const payoutStore = require("../util/payout-store");
 
 const router = express.Router();
 
@@ -49,6 +51,7 @@ router.use("/uploads", uploadRoute);
 router.use("/admin", adminRoute);
 router.use("/analytics", analyticsRoute);
 router.use("/catalog", catalogRoute);
+router.use("/payouts", payoutRoute);
 
 /**
  * Matches: GET /
@@ -107,6 +110,10 @@ router.get("/", async (req, res, next) => {
     const overdueReminders = reminderSnapshots.filter(
       (item) => item.type === "OVERDUE_CHECK",
     ).length;
+    const payoutSnapshots = payoutStore.listPayouts();
+    const pendingPayouts = payoutSnapshots.filter(
+      (payout) => payout.status === "pending" || payout.status === "processing",
+    ).length;
 
     // Render the customer list homepage
     const squareEnv = (
@@ -131,6 +138,11 @@ router.get("/", async (req, res, next) => {
       tickerStats: {
         upcomingReminders,
         overdueReminders,
+      },
+      payoutStats: {
+        total: payoutSnapshots.length,
+        pending: pendingPayouts,
+        lastRail: payoutSnapshots[0]?.rail || null,
       },
     });
   } catch (error) {

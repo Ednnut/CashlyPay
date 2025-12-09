@@ -76,6 +76,9 @@ html(lang="en" class="dark")
         a.nav-item(href="/admin/reminders" class=(currentPath && currentPath.startsWith('/admin') ? 'active' : ''))
           svg: use(href="#icon-invoice")
           span Reminders
+        a.nav-item(href="/payouts/console" class=(currentPath && currentPath.startsWith('/payouts') ? 'active' : ''))
+          svg: use(href="#icon-dashboard")
+          span Payouts
         p.nav-section Actions
         a.nav-item(href="/customers/new")
           svg: use(href="#icon-dashboard")
