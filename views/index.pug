@@ -84,7 +84,6 @@ block content
                 svg(width="18" height="18" viewBox="0 0 24 24" fill="none")
                   path(d="M10 4a6 6 0 106 6 6 6 0 00-6-6zm11 16l-4.5-4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
             .hero__quick-actions
-              a.button.button-sm(href="/customers/new") Add Customer
               a.button.button-sm(href="/management") Add Service
               a.button.button-sm(href="/invoice/create") Create Invoice
           .hero__ticker(role="status" aria-live="polite")
@@ -127,7 +126,7 @@ block content
               p.feature-highlight #{lastCustomer.givenName || 'Customer'} #{lastCustomer.familyName}
             else
               p.feature-highlight Waiting for first customer sync
-            a.button.button-secondary(href="/customers/new") Add customer
+            a.button.button-secondary(href="/management") View directory
           .feature-card
             h3 Quick Filters
             ul.quick-filter-list
@@ -175,9 +174,9 @@ block content
           .empty-state
             svg(width="64" height="64" viewBox="0 0 24 24" fill="none")
               path(d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 100-16 8 8 0 000 16zm-1-11h2v5h-2v-5zm0 6h2v2h-2v-2z" fill="currentColor")
-        h3 No customers yet
-        p Create a customer to unlock invoices, subscriptions, and analytics.
-        a.button.button-primary(href="/customers/new") Create your first customer
+          h3 No customers yet
+          p Create a customer to unlock invoices, subscriptions, and analytics.
+          a.button.button-primary(href="/customers/new") Create your first customer
 
   .command-drawer(id="commandDrawer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Navigation drawer")
     .command-drawer__panel

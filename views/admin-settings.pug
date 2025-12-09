@@ -1,36 +1,72 @@
 extends layout
 
 block styles
-  link(rel="stylesheet" href="/stylesheets/pages/analytics.css")
+  link(rel="stylesheet" href="/stylesheets/pages/customers.css")
 
 block content
-  .dashboard
-    section.section.panel
-      .section-header
-        .section-header__left
-          a.button.button-ghost(href="/")
-            svg(width="18" height="18" viewBox="0 0 20 20" fill="none")
-              path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-            span Dashboard
-          h1.page-title Workspace Settings
-        p.text-secondary Configure data sources, automation cadences, feature flags, and integration health.
+  - const environmentInfo = settings && settings.environment ? settings.environment : null
+  - const statusLabel = environmentInfo && environmentInfo.label ? environmentInfo.label : 'Testing'
+  - const statusTone = statusLabel === 'Live' ? 'live' : 'testing'
+  - const squareEnv = environmentInfo && environmentInfo.squareEnv ? environmentInfo.squareEnv : 'SANDBOX'
 
-    section.section.panel
-      h3.section-title Environment Overview
-      if settings
-        .settings-grid
-          .settings-card
-            span.settings-label Environment
-            span.settings-value #{settings.environment.label} (#{settings.environment.squareEnv})
-            span.settings-meta #{settings.environment.lastDeployed}
-          .settings-card
-            span.settings-label Timezone
-            span.settings-value #{settings.environment.timezone}
-            span.settings-meta System default for reminders & scheduling
-          .settings-card
-            span.settings-label Version
-            span.settings-value #{settings.environment.version}
-            span.settings-meta Application build reference
+  main.dashboard
+    section.hero
+      .container
+        .hero__content
+          .hero__crumbs
+            a.button.button-ghost.button-sm(href="/")
+              svg(width="16" height="16" viewBox="0 0 24 24" fill="none")
+                path(d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+              span Back to dashboard
+          span.hero__eyebrow CashlyPay Control
+          h1.hero__title Workspace Settings
+          p.hero__subtitle Configure data sources, automation cadences, feature flags, and integration health.
+          .hero__metrics
+            .metric-card
+              span.metric-label Environment
+              span.metric-value #{statusLabel}
+              span.metric-trend #{squareEnv}
+            if environmentInfo
+              .metric-card
+                span.metric-label Timezone
+                span.metric-value #{environmentInfo.timezone || 'UTC'}
+                span.metric-trend Reminder cadence TZ
+              .metric-card
+                span.metric-label Version
+                span.metric-value #{environmentInfo.version || '1.0.0'}
+                span.metric-trend #{environmentInfo.lastDeployed || 'Not recorded'}
+          .hero__cta-group
+            a.button.button-primary.button-lg(href="/admin/reminders")
+              svg(width="20" height="20" viewBox="0 0 24 24" fill="none")
+                path(d="M12 5v14m7-7H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+              span Run Reminder Queue
+            a.button.button-secondary.button-lg(href="/analytics")
+              svg(width="20" height="20" viewBox="0 0 24 24" fill="none")
+                path(d="M3 12h18m-9-9l9 9-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+              span View Analytics Pulse
+
+    section.highlights
+      .container
+        .card-grid
+          .feature-card
+            h3 Environment
+            if settings && settings.environment
+              p #{settings.environment.label} · #{settings.environment.squareEnv}
+              p.text-secondary Last deployed #{settings.environment.lastDeployed}
+          .feature-card
+            h3 Integrations
+            p.text-secondary Monitor the health of core systems
+            if settings && settings.integrations
+              ul.quick-filter-list
+                each integration in settings.integrations
+                  li
+                    span.status-chip(class=`status-chip--${integration.status === 'connected' ? 'success' : 'warning'}`)
+                      | #{integration.name}
+          .feature-card
+            h3 Reminder Cadence
+            if settings && settings.reminderConfig
+              p.text-secondary #{settings.reminderConfig.cadenceMinutes} min cadence · TZ #{settings.reminderConfig.timezone}
+              p Upcoming #{settings.reminderConfig.upcomingDays}d · Overdue #{settings.reminderConfig.overdueDays}d
 
     section.section.panel
       h3.section-title Integrations
@@ -39,47 +75,56 @@ block content
           each integration in settings.integrations
             li.integration-item(class=`integration-item--${integration.status}`)
               .integration-status
-                span.status-dot
-                span.integration-name #{integration.name}
-              span.integration-detail #{integration.detail}
+                span.status-chip(class=`status-chip--${integration.status === 'connected' ? 'success' : 'warning'}`)
+                  span.dot
+                  span.label #{integration.name}
+              if integration.detail
+                span.integration-detail #{integration.detail}
               if integration.status !== 'connected'
-                span.integration-action Configure in .env
+                a.button.button-ghost.button-sm(href="/admin") Configure in .env
 
     section.section.panel
       h3.section-title Reminder Cadence
       if settings && settings.reminderConfig
+        .cadence-grid
+          .cadence-metrics
+            span.metric-label Upcoming window
+            span.metric-value #{settings.reminderConfig.upcomingDays} days
+            span.metric-trend Upcoming reminders
+          .cadence-metrics
+            span.metric-label Overdue window
+            span.metric-value #{settings.reminderConfig.overdueDays} days
+            span.metric-trend Escalations
+          .cadence-metrics
+            span.metric-label Cadence
+            span.metric-value #{settings.reminderConfig.cadenceMinutes} min
+            span.metric-trend TZ #{settings.reminderConfig.timezone}
         form.settings-form(action='/admin/reminders/run' method='post')
-          .form-row
-            label
-              span.text-secondary Upcoming reminder window (days)
+          .form-row.form-row--two
+            label.form-field
+              span.form-label Upcoming reminder window (days)
               input(type='number' name='upcomingDays' value=settings.reminderConfig.upcomingDays min='1')
-            label
-              span.text-secondary Overdue reminder window (days)
+            label.form-field
+              span.form-label Overdue reminder window (days)
               input(type='number' name='overdueDays' value=settings.reminderConfig.overdueDays min='1')
-          .form-row
-            label
-              span.text-secondary Cadence (minutes)
+          .form-row.form-row--two
+            label.form-field
+              span.form-label Cadence (minutes)
               input(type='number' name='cadenceMinutes' value=settings.reminderConfig.cadenceMinutes min='5')
-            label
-              span.text-secondary Timezone
+            label.form-field
+              span.form-label Timezone
               input(type='text' name='timezone' value=settings.reminderConfig.timezone)
-          .form-actions
-            button.button.button-secondary(type='submit') Run Queue with current settings
+          .form-actions.form-actions--stack
+            button.button.button-primary(type='submit') Run Queue with current settings
             a.button.button-ghost(href='/admin/reminders') View Scheduled Jobs
 
     section.section.panel
       h3.section-title Feature Flags
       if settings && settings.featureFlags
-        .feature-flags
+        .feature-flag-grid
           each flag in settings.featureFlags
-            .feature-flag(class=flag.enabled ? 'feature-flag--on' : 'feature-flag--off')
-              .feature-flag__meta
-                span.feature-flag__name #{flag.label}
-                span.feature-flag__state #{flag.enabled ? 'Enabled' : 'Disabled'}
-              p.feature-flag__description #{flag.description}
-
-    section.section.panel
-      h3.section-title Automation Shortcuts
-      .button-group
-        a.button.button-primary(href="/admin/reminders") Open Reminder Queue
-        a.button.button-secondary(href="/analytics") View Analytics Pulse
+            .feature-flag-card(class=flag.enabled ? 'feature-flag-card--on' : 'feature-flag-card--off')
+              header.feature-flag-card__header
+                span.feature-flag-card__name #{flag.label}
+                span.feature-flag-card__state #{flag.enabled ? 'Enabled' : 'Disabled'}
+              p.feature-flag-card__description #{flag.description}

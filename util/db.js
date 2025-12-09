@@ -6,6 +6,14 @@ const DB_FILE = path.join(__dirname, "../data/app.db");
 const db = new Database(DB_FILE);
 db.pragma("journal_mode = WAL");
 
+const ensureColumn = (table, column, definition) => {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all();
+  const exists = columns.some((entry) => entry.name === column);
+  if (!exists) {
+    db.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`).run();
+  }
+};
+
 db.prepare(
   `
   CREATE TABLE IF NOT EXISTS services (
@@ -24,6 +32,8 @@ db.prepare(
   )
 `,
 ).run();
+ensureColumn("services", "breakdown", "TEXT");
+ensureColumn("services", "allow_cash_app", "INTEGER DEFAULT 0");
 
 db.prepare(
   `
