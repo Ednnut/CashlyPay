@@ -1,18 +1,17 @@
 extends layout
 
-block styles
-  link(rel="stylesheet" href="/stylesheets/pages/management.css")
+block hero
+  +darkHero({
+    title: "Add New Customer",
+    subtitle: "Collect contact, company, and billing details to start onboarding.",
+    actions: [
+      { type: "secondary", label: "Back to Customers", href: "/" }
+    ]
+  })
+
 
 block content
   .dashboard
-    header.section
-      .section-header
-        a.button.button-icon(href="/")
-          svg(width="20" height="20" viewBox="0 0 20 20" fill="none")
-            path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-          span Back to Customers
-        h1.page-title Add New Customer
-
     section.section
       form.customer-form(action="/customers" method="post")
         .form-grid

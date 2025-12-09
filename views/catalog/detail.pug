@@ -1,7 +1,14 @@
 extends ../layout
 
-block styles
-  link(rel="stylesheet" href="/stylesheets/pages/catalog.css")
+block hero
+  +darkHero({
+    title: service.name,
+    subtitle: service.description,
+    actions: [
+      { type: "secondary", label: "Back to Catalog", href: "/catalog" }
+    ]
+  })
+
 
 block scripts
   script.
@@ -29,9 +36,6 @@ block scripts
 block content
   .dashboard
     section.section.panel
-      .section-header
-        h1.section-title #{service.name}
-        a.button.button-secondary(href="/catalog") Back to catalog
       p.text-secondary= service.description
       .service-meta
         span.badge(class=`badge-${service.status === 'active' ? 'success' : 'warning'}`)= service.status

@@ -1,19 +1,17 @@
 extends layout
 
-block styles
-  link(rel="stylesheet" href="/stylesheets/pages/management.css")
-  link(rel="stylesheet" href="/stylesheets/pages/estimate.css")
+block hero
+  +darkHero({
+    title: "Create Estimate",
+    subtitle: "Bundle services, prices, and payment preferences for a proposal.",
+    actions: [
+      { type: "secondary", label: "Back to Customer", href: `/management/${locationId}/${customer.id}` }
+    ]
+  })
+
 
 block content
   .dashboard
-    header.section
-      .section-header
-        a.button.button-icon(href=`/management/${locationId}/${customer.id}`)
-          svg(width="20" height="20" viewBox="0 0 20 20" fill="none")
-            path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-          span Back to Customer
-        h1.page-title Create Estimate
-
     section.section.wizard
       .wizard__steps
         .wizard-step.active

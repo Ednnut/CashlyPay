@@ -1,7 +1,14 @@
 extends ../layout
 
-block styles
-  link(rel="stylesheet" href="/stylesheets/pages/catalog.css")
+block hero
+  +darkHero({
+    title: "New Service Bundle",
+    subtitle: "Model components, rails, and approvals for multi-stage offerings.",
+    actions: [
+      { type: "secondary", label: "Catalog", href: "/catalog" }
+    ]
+  })
+
 
 block scripts
   script.
@@ -28,9 +35,6 @@ block content
   .dashboard
     section.section.panel
       - const formData = form || {}
-      .section-header
-        h1.section-title New Service
-        a.button.button-secondary(href="/catalog") Cancel
       if errors && errors.length
         ul.error-list
           each error in errors

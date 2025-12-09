@@ -14,8 +14,16 @@
 
 extends layout
 
-block styles
-  link(rel="stylesheet" href="/stylesheets/pages/customers.css")
+block hero
+  +darkHero({
+    title: "Modern Customer Workspace",
+    subtitle: "Manage clients, invoices, reminders, and analytics from a single hub designed for finance teams on the go.",
+    actions: [
+      { type: "primary", label: "Add New Customer", href: "/customers/new" },
+      { type: "secondary", label: "View Analytics", href: "/analytics" }
+    ]
+  })
+
 
 block content
   - const totalCustomers = customers.length
@@ -23,15 +31,12 @@ block content
   - const manualCustomers = totalCustomers - cardCustomers.length
   - const lastCustomer = customers[0]
   - const statusLabel = (envStatus && envStatus.label) || 'Testing'
-  - const statusTone = (envStatus && envStatus.tone) || 'testing'
   - const primaryCustomerId = lastCustomer && lastCustomer.id
   - const managementHref = primaryCustomerId ? `/management/${locationId}/${primaryCustomerId}` : '/customers/new'
   - const invoiceHref = managementHref
   - const estimateHref = primaryCustomerId ? `/estimate/new/${locationId}/${primaryCustomerId}` : '/customers/new'
   - const subscriptionHref = primaryCustomerId ? `/subscription/new/${locationId}/${primaryCustomerId}` : '/customers/new'
   - const reminderCountValue = typeof reminderCount === 'number' ? reminderCount : 0
-  - const profileName = 'Ops Team'
-  - const profileInitials = 'OT'
   - const settingsHref = '/admin'
   - const safeTickerStats = tickerStats || { upcomingReminders: 0, overdueReminders: 0 }
   - const invoiceTicker = invoiceStats || { overdueInvoiceCount: 0, scheduledInvoiceCount: 0 }
@@ -44,61 +49,28 @@ block content
   main.dashboard(data-reminders=reminderCountValue data-overdue=invoiceTicker.overdueInvoiceCount)
     section.hero
       .container
-        .hero__branding-bar
-          .hero__branding-left
-            button.hero__nav-trigger(type="button" aria-label="Open navigation panel" aria-controls="commandDrawer")
-              span.bar
-              span.bar
-              span.bar
-            .logo-mark
-              span.logo-initial C
-            .branding-copy
-              span.brand-name CashlyPay
-              span.brand-tag Finance OS
-          .hero__branding-right
-            .hero__status-chip(class=`hero__status-chip--${statusTone}`)
-              span.dot
-              span.label #{statusLabel === 'Live' ? 'Live Environment' : 'Testing Environment'}
-              span.meta #{statusLabel === 'Live' ? 'Production data' : 'Sandbox data'}
-            .hero__profile
-              button.hero__profile-trigger(type="button" aria-haspopup="true" aria-expanded="false" aria-controls="heroProfileMenu")
-                span.avatar #{profileInitials}
-                span.hero__profile-name #{profileName}
-                svg(viewBox="0 0 24 24" width="20" height="20")
-                  path(d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-                if reminderCountValue > 0
-                  span.hero__badge(aria-hidden="true") #{reminderCountValue}
-              .profile-dropdown(role="menu" id="heroProfileMenu")
-                a(role="menuitem" href="/customers/new") Account
-                a(role="menuitem" href="/admin/reminders") Notifications
-                a(role="menuitem" href="/settings") Settings
-                a(role="menuitem" href="/customers/new") Sign out
-        .hero__content
-          span.hero__eyebrow CashlyPay Command Center
-          h1.hero__title Modern Customer Workspace
-          p.hero__subtitle Manage clients, invoices, reminders, and analytics from a single hub designed for finance teams on the go.
-          .hero__ribbon
-            form.hero__search-bar(action="/management" method="get")
-              input(type="text" name="q" aria-label="Search customers, invoices, or services" placeholder="Quick search customers, invoices, or services" autocomplete="off")
-              button(type="submit" aria-label="Submit search")
-                svg(width="18" height="18" viewBox="0 0 24 24" fill="none")
-                  path(d="M10 4a6 6 0 106 6 6 6 0 00-6-6zm11 16l-4.5-4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-            .hero__quick-actions
-              a.button.button-sm(href="/management") Add Service
-              a.button.button-sm(href="/invoice/create") Create Invoice
-              a.button.button-sm(href="/payouts/console") Payout Console
-          .hero__ticker(role="status" aria-live="polite")
-            .ticker-track
-              each item in tickerItems
-                .ticker-item
-                  span.ticker-label #{item.label}
-                  span.ticker-value #{item.value}
-          .hero__cta-group
-            a.button.button-primary.button-lg(href="/customers/new")
-              svg(width="20" height="20" viewBox="0 0 24 24" fill="none")
-                path(d="M12 5v14m7-7H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-              | Add New Customer
-            a.button.button-ghost.button-lg(href="/analytics") View Analytics
+        .hero__ribbon
+          form.hero__search-bar(action="/management" method="get")
+            input(type="text" name="q" aria-label="Search customers, invoices, or services" placeholder="Quick search customers, invoices, or services" autocomplete="off")
+            button(type="submit" aria-label="Submit search")
+              svg(width="18" height="18" viewBox="0 0 24 24" fill="none")
+                path(d="M10 4a6 6 0 106 6 6 6 0 00-6-6zm11 16l-4.5-4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+          .hero__quick-actions
+            a.button.button-sm(href="/management") Add Service
+            a.button.button-sm(href="/invoice/create") Create Invoice
+            a.button.button-sm(href="/payouts/console") Payout Console
+        .hero__ticker(role="status" aria-live="polite")
+          .ticker-track
+            each item in tickerItems
+              .ticker-item
+                span.ticker-label #{item.label}
+                span.ticker-value #{item.value}
+        .hero__cta-group
+          a.button.button-primary.button-lg(href="/customers/new")
+            svg(width="20" height="20" viewBox="0 0 24 24" fill="none")
+              path(d="M12 5v14m7-7H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+            | Add New Customer
+          a.button.button-ghost.button-lg(href="/analytics") View Analytics
         .hero__metrics
           .metric-card
             span.metric-label Total Customers

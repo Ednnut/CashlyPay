@@ -1,21 +1,16 @@
 extends layout
 
-block styles
-  link(rel="stylesheet" href="/stylesheets/pages/payouts.css")
+block hero
+  +darkHero({
+    title: "Payout Console",
+    subtitle: "Orchestrate payouts across benefactors, rails, and approvals",
+    actions: [
+      { type: "secondary", label: "Add Beneficiary", href: "#beneficiary-form" },
+      { type: "primary", label: "Cash Out", href: "#payout-form" }
+    ]
+  })
 
 block content
-  main.money-dashboard
-    header.money-header
-      a.money-back(href="/")
-        svg(width="16" height="16" viewBox="0 0 24 24" fill="none")
-          path(d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-        span Dashboard
-      h1.money-title Payouts
-      button.money-profile(type="button")
-        span.dot
-        span.dot
-        span.dot
-
     section.balance-card
       .balance-card__top
         span.balance-label Cash Balance

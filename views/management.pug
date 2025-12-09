@@ -13,8 +13,18 @@
 //- limitations under the License. 
 
 extends layout
-block styles
-  link(rel="stylesheet" href="/stylesheets/pages/management.css")
+
+block hero
+  +darkHero({
+    title: `Command Center for ${customer.givenName} ${customer.familyName}`,
+    subtitle: "End-to-end view of invoices, subscriptions, reminders, and payment posture.",
+    actions: [
+      { type: "primary", label: "Create Estimate", href: `/estimate/new/${locationId}/${customer.id}` },
+      { type: "secondary", label: "Launch Subscription", href: `/subscription/new/${locationId}/${customer.id}` },
+      { type: "secondary", label: "View Analytics", href: "/analytics" }
+    ]
+  })
+
 
 block content
   - const totalInvoices = invoices ? invoices.length : 0
@@ -26,10 +36,6 @@ block content
     section.customer-hero
       .customer-hero__layout
         .customer-hero__copy
-          a.button.button-icon(href="/")
-            svg(width="20" height="20" viewBox="0 0 20 20" fill="none")
-              path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-            span Back to Customers
           span.customer-hero__eyebrow CashlyPay Customer Hub
           h1.customer-hero__title Command Center for #{customer.givenName}
           p.customer-hero__subtitle End-to-end view of invoices, subscriptions, reminders, and payment posture.

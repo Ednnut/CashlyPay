@@ -26,6 +26,8 @@ html(lang="en" class="dark")
     
     //- Main Stylesheet
     link(rel="stylesheet" href="/stylesheets/main.css")
+    //- Shared dark theme (payout) styles
+    link(rel="stylesheet" href="/stylesheets/pages/dark-theme.css")
     block styles
     
     title Cashly - Modern Invoice Management
@@ -38,7 +40,8 @@ html(lang="en" class="dark")
     a.skip-link(href="#dashboardMain") Skip to dashboard
     #sr-announcer.sr-only(aria-live="assertive" aria-atomic="true")
     include ../public/images/sprites.svg
-    
+    include components/dark-hero.pug
+
     //- Sidebar
     aside.sidebar
       .sidebar__header
@@ -88,7 +91,9 @@ html(lang="en" class="dark")
     //- Main Content
     main.content
       .container#dashboardMain
-        block content
+        .money-dashboard
+          block hero
+          block content
     
     //- Footer
     footer.footer

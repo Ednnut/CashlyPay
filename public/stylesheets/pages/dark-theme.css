@@ -1,3 +1,13 @@
+@import "./analytics.css";
+@import "./catalog.css";
+@import "./customers.css";
+@import "./estimate.css";
+@import "./invoice.css";
+@import "./management.css";
+@import "./milestones.css";
+@import "./reminders.css";
+@import "./error.css";
+
 .money-dashboard {
   min-height: 100vh;
   background:

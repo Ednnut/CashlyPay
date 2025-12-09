@@ -1,31 +1,17 @@
 extends layout
 
-block styles
-  link(rel="stylesheet" href="/stylesheets/pages/management.css")
-  link(rel="stylesheet" href="/stylesheets/pages/estimate.css")
+block hero
+  +darkHero({
+    title: "Create Recurring Plan",
+    subtitle: `Automate usage-based billing, deposits, and reminders for ${customer.givenName}.`,
+    actions: [
+      { type: "secondary", label: "Back to Customer", href: `/management/${locationId}/${customer.id}` }
+    ]
+  })
+
 
 block content
   .dashboard
-    section.subscription-hero
-      .subscription-hero__layout
-        .subscription-hero__copy
-          .subscription-hero__branding
-            a.button.button-icon(href=`/management/${locationId}/${customer.id}`)
-              svg(width="20" height="20" viewBox="0 0 20 20" fill="none")
-                path(d="M10 1L2 10m0 0h16M2 10l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-              span Back to Customer
-            span.brand-pill CashlyPay Subscription
-          span.subscription-hero__eyebrow Subscriptions
-          h1.subscription-hero__title Create Recurring Plan
-          p.subscription-hero__subtitle Automate usage-based billing, deposits, and reminders for #{customer.givenName}.
-        .subscription-hero__metrics
-          .hero-stat
-            span.label Available services
-            span.value #{serviceItems.length}
-          .hero-stat
-            span.label Default currency
-            span.value #{defaultCurrency}
-
     section.section.wizard
       .wizard__steps
         .wizard-step.active

@@ -1,50 +1,22 @@
 extends layout
 
-block styles
-  link(rel="stylesheet" href="/stylesheets/pages/customers.css")
+block hero
+  +darkHero({
+    title: "Workspace Settings",
+    subtitle: "Configure data sources, automation cadences, feature flags, and integration health.",
+    actions: [
+      { type: "primary", label: "Run Reminder Queue", href: "/admin/reminders" },
+      { type: "secondary", label: "View Analytics Pulse", href: "/analytics" }
+    ]
+  })
+
 
 block content
   - const environmentInfo = settings && settings.environment ? settings.environment : null
   - const statusLabel = environmentInfo && environmentInfo.label ? environmentInfo.label : 'Testing'
-  - const statusTone = statusLabel === 'Live' ? 'live' : 'testing'
   - const squareEnv = environmentInfo && environmentInfo.squareEnv ? environmentInfo.squareEnv : 'SANDBOX'
 
   main.dashboard
-    section.hero
-      .container
-        .hero__content
-          .hero__crumbs
-            a.button.button-ghost.button-sm(href="/")
-              svg(width="16" height="16" viewBox="0 0 24 24" fill="none")
-                path(d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-              span Back to dashboard
-          span.hero__eyebrow CashlyPay Control
-          h1.hero__title Workspace Settings
-          p.hero__subtitle Configure data sources, automation cadences, feature flags, and integration health.
-          .hero__metrics
-            .metric-card
-              span.metric-label Environment
-              span.metric-value #{statusLabel}
-              span.metric-trend #{squareEnv}
-            if environmentInfo
-              .metric-card
-                span.metric-label Timezone
-                span.metric-value #{environmentInfo.timezone || 'UTC'}
-                span.metric-trend Reminder cadence TZ
-              .metric-card
-                span.metric-label Version
-                span.metric-value #{environmentInfo.version || '1.0.0'}
-                span.metric-trend #{environmentInfo.lastDeployed || 'Not recorded'}
-          .hero__cta-group
-            a.button.button-primary.button-lg(href="/admin/reminders")
-              svg(width="20" height="20" viewBox="0 0 24 24" fill="none")
-                path(d="M12 5v14m7-7H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-              span Run Reminder Queue
-            a.button.button-secondary.button-lg(href="/analytics")
-              svg(width="20" height="20" viewBox="0 0 24 24" fill="none")
-                path(d="M3 12h18m-9-9l9 9-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-              span View Analytics Pulse
-
     section.highlights
       .container
         .card-grid

@@ -1,0 +1,17 @@
+mixin darkHero({ title = "CashlyPay", subtitle = "Modern Finance OS", actions = [] } = {})
+  .dark-hero
+    .dark-hero__top
+      a.dark-hero__back(href="/" aria-label="Back to dashboard")
+        svg(width="16" height="16" viewBox="0 0 24 24" fill="none")
+          path(d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+        span Dashboard
+      span.dark-hero__title #{title}
+      .dark-hero__spacer
+    .dark-hero__subtitle #{subtitle}
+    if actions && actions.length
+      .dark-hero__actions
+        each action in actions
+          if action.type === "primary"
+            a.button.button-primary.button-lg(href=action.href)= action.label
+          else if action.type === "secondary"
+            a.button.button-secondary.button-lg(href=action.href)= action.label

@@ -1,7 +1,13 @@
 extends ../layout
 
-block styles
-  link(rel="stylesheet" href="/stylesheets/pages/milestones.css")
+block hero
+  +darkHero({
+    title: "Milestone Invoice Builder",
+    subtitle: "Plan mobilization, progress draws, and retention windows with granular payment rails.",
+    actions: [
+      { type: "secondary", label: "Back to Customer", href: `/management/${location.id}/${customer.id}` }
+    ]
+  })
 
 block scripts
   script.
@@ -78,10 +84,6 @@ block scripts
 block content
   .dashboard
     section.section.panel
-      .section-header
-        h1.section-title Milestone Invoice Builder
-        a.button.button-secondary(href=`/management/${location.id}/${customer.id}`)
-          span Back to customer
       p.text-secondary Plan mobilization, progress draws, and retention windows with granular payment rails.
     section.section.panel
       form.catalog-form(data-milestone-form method="post" action="/invoice/create-milestones")
