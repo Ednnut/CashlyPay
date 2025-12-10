@@ -15,13 +15,18 @@
 extends layout
 
 block hero
+  - var heroStatusLabel = (envStatus && envStatus.label) || 'Testing'
   +darkHero({
     title: "Modern Customer Workspace",
     subtitle: "Manage clients, invoices, reminders, and analytics from a single hub designed for finance teams on the go.",
     actions: [
       { type: "primary", label: "Add New Customer", href: "/customers/new" },
       { type: "secondary", label: "View Analytics", href: "/analytics" }
-    ]
+    ],
+    status: {
+      label: heroStatusLabel === 'Live' ? 'Live Environment' : 'Testing Environment',
+      tone: heroStatusLabel === 'Live' ? 'success' : 'warning'
+    }
   })
 
 
@@ -30,10 +35,11 @@ block content
   - const cardCustomers = customers.filter((customer) => customer.cards && customer.cards.length)
   - const manualCustomers = totalCustomers - cardCustomers.length
   - const lastCustomer = customers[0]
-  - const statusLabel = (envStatus && envStatus.label) || 'Testing'
+  - const statusLabel = typeof heroStatusLabel !== 'undefined' ? heroStatusLabel : (envStatus && envStatus.label) || 'Testing'
   - const primaryCustomerId = lastCustomer && lastCustomer.id
-  - const managementHref = primaryCustomerId ? `/management/${locationId}/${primaryCustomerId}` : '/customers/new'
-  - const invoiceHref = managementHref
+  - const customerDetailHref = primaryCustomerId ? `/management/${locationId}/${primaryCustomerId}` : '/customers/new'
+  - const managementHref = customerDetailHref
+  - const invoiceHref = customerDetailHref
   - const estimateHref = primaryCustomerId ? `/estimate/new/${locationId}/${primaryCustomerId}` : '/customers/new'
   - const subscriptionHref = primaryCustomerId ? `/subscription/new/${locationId}/${primaryCustomerId}` : '/customers/new'
   - const reminderCountValue = typeof reminderCount === 'number' ? reminderCount : 0
@@ -99,7 +105,7 @@ block content
               p.feature-highlight #{lastCustomer.givenName || 'Customer'} #{lastCustomer.familyName}
             else
               p.feature-highlight Waiting for first customer sync
-            a.button.button-secondary(href="/management") View directory
+            a.button.button-secondary(href="/customers") View directory
           .feature-card
             h3 Quick Filters
             ul.quick-filter-list
@@ -118,75 +124,26 @@ block content
               p.text-secondary No payouts initiated yet.
             a.button.button-secondary(href="/payouts/console") Manage payouts
 
-    section.customers-section
-      .container
-        .section-header
-          h2.customers-list-title Customer Directory
-          .section-actions
-            .search-box
-              svg.icon.search-icon(viewBox="0 0 20 20")
-                path(d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" fill="currentColor")
-              input.search-input(type="text" placeholder="Quick search (coming soon)")
-
-        if customers.length
-          .customers-list
-            each customer in customers
-              .customer-card
-                a.customer-link(href=`/management/${locationId}/${customer.id}`)
-                  .customer-content
-                    .customer-info-group
-                      .customer-name #{customer.givenName || 'Customer'} #{customer.familyName}
-                      p.customer-email #{customer.emailAddress || 'No email on file'}
-                      .customer-meta
-                        if customer.companyName
-                          span.company-name #{customer.companyName}
-                        span.customer-id ##{customer.id.substring(0, 6)}
-                    .customer-badges
-                      if customer.cards && customer.cards.length
-                        span.badge.badge-success Card on file
-                        span.card-brand #{customer.cards[0].cardBrand} •••• #{customer.cards[0].last4}
-                      else
-                        span.badge.badge-neutral Manual billing
-                        span.card-brand Add payment method
-                  .customer-card__right
-                    svg.icon-arrow(width="20" height="20" viewBox="0 0 20 20" fill="none")
-                      path(d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
-        else
-          .empty-state
-            svg(width="64" height="64" viewBox="0 0 24 24" fill="none")
-              path(d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 100-16 8 8 0 000 16zm-1-11h2v5h-2v-5zm0 6h2v2h-2v-2z" fill="currentColor")
-          h3 No customers yet
-          p Create a customer to unlock invoices, subscriptions, and analytics.
-          a.button.button-primary(href="/customers/new") Create your first customer
-
-  .command-drawer(id="commandDrawer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Navigation drawer")
-    .command-drawer__panel
-      .command-drawer__header
-        .logo-mark
-          span.logo-initial C
-        .drawer-meta
-          span.drawer-title CashlyPay OS
-          span.drawer-subtitle Navigate & automate
-        button.command-drawer__close(type="button" aria-label="Close navigation panel")
-          span
-      nav.command-drawer__nav
-        ul
-          li: a(href="/") Dashboard
-          li: a(href=managementHref) Management
-          li: a(href=invoiceHref) Invoices
-          li: a(href=estimateHref) Estimates
-          li: a(href=subscriptionHref) Subscriptions
-          li: a(href="/analytics") Analytics
-          li: a(href="/admin/reminders") Reminder Queue
-          li: a(href=settingsHref) Settings
-      .command-drawer__actions
-        a.button.button-primary(href=managementHref) Create Invoice
-        a.button.button-secondary(href="/admin/reminders") Run Reminder Queue
-
   .reminder-toast(data-toast role="status" aria-live="polite")
     span.toast-dot
     span.toast-message Reminder queue synced.
     button.toast-close(type="button" aria-label="Dismiss notification") ×
 
-block append scripts
-  script(src="/javascripts/dashboard.js" defer)
+block commandDrawer
+  -
+    const drawerLinks = [
+      { label: "Dashboard", href: "/" },
+      { label: "Customer Hub", href: '/customers', match: ['/customers', '/management'] },
+      { label: "Invoices", href: invoiceHref },
+      { label: "Estimates", href: estimateHref },
+      { label: "Subscriptions", href: subscriptionHref },
+      { label: "Analytics", href: "/analytics" },
+      { label: "Reminder Queue", href: "/admin/reminders" },
+      { label: "Settings", href: settingsHref }
+    ];
+  -
+    const drawerActions = [
+      { label: "Create Invoice", href: managementHref, tone: "primary" },
+      { label: "Run Reminder Queue", href: "/admin/reminders", tone: "secondary" }
+    ];
+  +commandDrawer({ links: drawerLinks, actions: drawerActions, currentPath })

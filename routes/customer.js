@@ -16,7 +16,7 @@ limitations under the License.
 
 const express = require("express");
 const Joi = require("joi");
-const { customersApi } = require("../util/square-client");
+const { customersApi, locationsApi } = require("../util/square-client");
 
 const router = express.Router();
 
@@ -33,6 +33,43 @@ const customerSchema = Joi.object({
   administrativeDistrictLevel1: Joi.string().trim().max(100).allow(""),
   postalCode: Joi.string().trim().max(30).allow(""),
   country: Joi.string().trim().uppercase().length(2).default("US"),
+});
+
+router.get("/", async (req, res, next) => {
+  try {
+    const {
+      result: { location },
+    } = await locationsApi.retrieveLocation("main");
+    const {
+      result: { customers = [] },
+    } = await customersApi.listCustomers();
+    const customersWithEmail = customers.filter(
+      (customer) => customer.emailAddress,
+    );
+    const displayCustomers =
+      customersWithEmail.length > 0 ? customersWithEmail : customers;
+    const customersWithCards = displayCustomers.filter(
+      (customer) => customer.cards && customer.cards.length,
+    );
+    const env =
+      (
+        process.env.SQUARE_ENVIRONMENT ||
+        process.env.NODE_ENV ||
+        "sandbox"
+      ).toLowerCase() === "production"
+        ? { label: "Live", tone: "live" }
+        : { label: "Testing", tone: "testing" };
+    res.render("customer-hub", {
+      customers: displayCustomers,
+      totalCustomers: displayCustomers.length,
+      cardCustomers: customersWithCards.length,
+      manualCustomers: displayCustomers.length - customersWithCards.length,
+      envStatus: env,
+      locationId: location.id,
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.get("/new", (req, res) => {
